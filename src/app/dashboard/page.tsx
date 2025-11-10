@@ -13,26 +13,53 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   const handleAssignCase = (caseId: string, agent: Agent) => {
-    setCases((currentCases) =>
-      currentCases.map((c) => {
-        if (c.uniqueId?.startsWith(caseId)) { // Match by base ID
-          const newStatus: CaseStatus =
-            agent.email === 'pace@zamp.ai' ? 'Assigned to Pace' : 'All Assigned';
-          
-          toast({
-            title: 'Case Assigned',
-            description: `Case #${caseId} has been assigned to ${agent.name}.`,
-          });
-
-          // This logic might need refinement if a case can be in multiple non-assign-related columns
-          // and you want to move it from all of them.
-          if (c.status !== 'All closed') {
-             return { ...c, assignee: agent, status: newStatus };
-          }
+    setCases((currentCases) => {
+      let caseAssigned = false;
+      const updatedCases = currentCases.map((c) => {
+        if (c.id === caseId) {
+          // Update the assignee for all instances of this case
+          return { ...c, assignee: agent };
         }
         return c;
-      })
-    );
+      });
+
+      // If assigning to Pace, add a new entry to the "Assigned to Pace" column
+      if (agent.email === 'pace@zamp.ai') {
+        const originalCase = currentCases.find(c => c.id === caseId);
+        if (originalCase) {
+          // Check if it's already in the "Assigned to Pace" column to avoid duplicates
+          const alreadyInPaceColumn = updatedCases.some(c => c.id === caseId && c.status === 'Assigned to Pace');
+          
+          if (!alreadyInPaceColumn) {
+            const newPaceCase: Case = {
+              ...originalCase,
+              assignee: agent,
+              status: 'Assigned to Pace',
+              uniqueId: `${caseId}-Assigned to Pace-${Date.now()}` // Ensure a unique ID
+            };
+            updatedCases.push(newPaceCase);
+            caseAssigned = true;
+          }
+        }
+      }
+
+      if (!caseAssigned) {
+         // This block will run for agents other than Pace, or if the case was already in Pace's column
+         const caseExists = updatedCases.some(c => c.id === caseId);
+         if (caseExists) {
+             caseAssigned = true;
+         }
+      }
+
+      if (caseAssigned) {
+        toast({
+          title: 'Case Assigned',
+          description: `Case #${caseId} has been assigned to ${agent.name}.`,
+        });
+      }
+
+      return updatedCases;
+    });
   };
 
   return (
