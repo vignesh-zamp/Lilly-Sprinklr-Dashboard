@@ -97,6 +97,30 @@ export default function DashboardPage() {
     });
   };
 
+  const handleRestoreCase = (caseId: string) => {
+    setCases((currentCases) => {
+        const caseToRestore = currentCases.find(c => c.id === caseId && c.status === 'All closed');
+        if (!caseToRestore) return currentCases;
+
+        // Remove the 'All closed' instance of the case
+        const withoutClosed = currentCases.filter(c => c.uniqueId !== caseToRestore.uniqueId);
+        
+        // Add it back to 'All Assigned'
+        withoutClosed.push({
+            ...caseToRestore,
+            status: 'All Assigned',
+            uniqueId: `${caseId}-All Assigned-${Date.now()}`
+        });
+
+        toast({
+            title: "Case Restored",
+            description: `Case #${caseId} has been restored to "All Assigned".`
+        });
+
+        return withoutClosed;
+    });
+  };
+
   return (
     <ScrollArea className="w-full whitespace-nowrap bg-background">
       <div className="flex w-max space-x-4 p-4 h-[calc(100vh-4rem)]">
@@ -107,6 +131,7 @@ export default function DashboardPage() {
             cases={cases.filter((c) => c.status === status)}
             agents={agents}
             onAssignCase={handleAssignCase}
+            onRestoreCase={handleRestoreCase}
           />
         ))}
       </div>

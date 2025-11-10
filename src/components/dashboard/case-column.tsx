@@ -9,9 +9,10 @@ type CaseColumnProps = {
   cases: Case[];
   agents: Agent[];
   onAssignCase: (caseId: string, agent: Agent) => void;
+  onRestoreCase: (caseId: string) => void;
 };
 
-export function CaseColumn({ title, cases, agents, onAssignCase }: CaseColumnProps) {
+export function CaseColumn({ title, cases, agents, onAssignCase, onRestoreCase }: CaseColumnProps) {
   return (
     <div className="flex flex-col h-full bg-muted/50 rounded-none w-[380px] border">
       <div className="p-3 border-b flex items-center gap-3 bg-card shrink-0">
@@ -25,7 +26,13 @@ export function CaseColumn({ title, cases, agents, onAssignCase }: CaseColumnPro
       <ScrollArea className="flex-1 bg-card">
         <div className="flex flex-col">
           {cases.map((caseItem) => (
-            <CaseCard key={caseItem.uniqueId} caseItem={caseItem} agents={agents} onAssignCase={onAssignCase} />
+            <CaseCard 
+              key={caseItem.uniqueId} 
+              caseItem={caseItem} 
+              agents={agents} 
+              onAssignCase={onAssignCase}
+              onRestoreCase={onRestoreCase}
+            />
           ))}
           {cases.length === 0 && (
              <div className="flex items-center justify-center h-40 text-sm text-muted-foreground">
