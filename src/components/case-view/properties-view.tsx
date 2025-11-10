@@ -31,7 +31,7 @@ const PropertyPill = ({ children, onRemove }: { children: React.ReactNode; onRem
   </div>
 );
 
-const PropertyMultiSelect = ({
+export const PropertyMultiSelect = ({
   title,
   options,
   selected,
@@ -297,4 +297,5 @@ export function PropertiesView({ properties, assignee, agents, onPropertyChange 
     </aside>
   );
 }
+    
     
