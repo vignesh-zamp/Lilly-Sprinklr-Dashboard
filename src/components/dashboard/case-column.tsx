@@ -11,10 +11,11 @@ type CaseColumnProps = {
   agents: Agent[];
   onAssignCase: (caseId: string, agent: Agent) => void;
   onRestoreCase: (caseId: string) => void;
+  onMoveCase: (caseId: string) => void;
   isFirst?: boolean;
 };
 
-export function CaseColumn({ title, cases, agents, onAssignCase, onRestoreCase, isFirst = false }: CaseColumnProps) {
+export function CaseColumn({ title, cases, agents, onAssignCase, onRestoreCase, onMoveCase, isFirst = false }: CaseColumnProps) {
   return (
     <div className={cn(
         "flex flex-col h-full bg-muted/50 rounded-none w-[380px] border-r border-y",
@@ -37,6 +38,7 @@ export function CaseColumn({ title, cases, agents, onAssignCase, onRestoreCase, 
               agents={agents} 
               onAssignCase={onAssignCase}
               onRestoreCase={onRestoreCase}
+              onMoveCase={onMoveCase}
             />
           ))}
           {cases.length === 0 && (

@@ -3,14 +3,13 @@
 
 import { useState, useEffect } from 'react';
 import { CaseColumn } from '@/components/dashboard/case-column';
-import { agents, initialCases } from '@/lib/mock-data';
+import { agents } from '@/lib/mock-data';
 import type { Case, CaseStatus, Agent } from '@/lib/types';
 import { caseStatuses } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
-import { Button } from '@/components/ui/button';
+import { collection, doc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -23,44 +22,6 @@ export default function DashboardPage() {
     user && firestore ? collection(firestore, 'cases') : null
   , [user, firestore]);
   const { data: cases, isLoading } = useCollection<Case>(casesCollectionRef);
-
-  const handleSeedDatabase = async () => {
-    if (!firestore) return;
-    try {
-      const batch = writeBatch(firestore);
-      initialCases.forEach((caseItem) => {
-        const caseRef = doc(firestore, 'cases', caseItem.id);
-        const { uniqueId, ...caseData } = caseItem;
-
-        // Firestore does not accept 'undefined'. Convert to 'null'.
-        const casePayload: any = { ...caseData };
-        if (casePayload.assignee === undefined) {
-          casePayload.assignee = null;
-        }
-        
-        batch.set(caseRef, casePayload);
-      });
-      await batch.commit();
-      toast({
-        title: 'Database Seeded',
-        description: 'The initial case data has been loaded into Firestore.',
-      });
-    } catch (error) {
-      console.error("Error seeding database: ", error);
-      const permissionError = new FirestorePermissionError({
-        path: 'cases',
-        operation: 'write',
-        requestResourceData: initialCases
-      });
-      errorEmitter.emit('permission-error', permissionError);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not seed the database.',
-      });
-    }
-  };
-
 
   const handleAssignCase = async (caseId: string, agent: Agent) => {
     if (!firestore || !user) return;
@@ -126,6 +87,28 @@ export default function DashboardPage() {
         });
   };
 
+  const handleMoveCase = async (caseId: string) => {
+    if (!firestore) return;
+    const caseRef = doc(firestore, 'cases', caseId);
+    const updatePayload = { status: 'All Demo - Awaiting' };
+
+    updateDoc(caseRef, updatePayload)
+        .catch((error) => {
+            console.error("Error moving case: ", error);
+            const permissionError = new FirestorePermissionError({
+              path: caseRef.path,
+              operation: 'update',
+              requestResourceData: updatePayload
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not move case.',
+            });
+        });
+  };
+
 
   if (isLoading) {
     return (
@@ -147,13 +130,6 @@ export default function DashboardPage() {
 
   return (
     <>
-    {cases && cases.length === 0 && !isLoading && (
-        <div className="container mx-auto text-center py-10">
-          <h2 className="text-2xl font-semibold mb-4">Welcome to Your Dashboard!</h2>
-          <p className="text-muted-foreground mb-6">It looks like your database is empty. Please seed it with the initial case data.</p>
-          <Button onClick={handleSeedDatabase} size="lg">Seed Database</Button>
-        </div>
-      )}
     {cases && cases.length > 0 && (
       <ScrollArea className="w-full whitespace-nowrap bg-background">
         <div className="flex w-max h-[calc(100vh-4rem)]">
@@ -165,6 +141,7 @@ export default function DashboardPage() {
               agents={agents}
               onAssignCase={handleAssignCase}
               onRestoreCase={handleRestoreCase}
+              onMoveCase={handleMoveCase}
               isFirst={index === 0}
             />
           ))}

@@ -4,7 +4,7 @@ import type { Agent, Case, CaseSource } from '@/lib/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, MessageSquare, Flag, MapPin, MoreHorizontal, Edit, Reply, UserPlus, RotateCcw } from 'lucide-react';
+import { User, MessageSquare, Flag, MapPin, MoreHorizontal, Edit, Reply, UserPlus, RotateCcw, Move } from 'lucide-react';
 import { TwitterIcon } from '@/components/icons/twitter-icon';
 import { Facebook, Mail, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ type CaseCardProps = {
   agents: Agent[];
   onAssignCase: (caseId: string, agent: Agent) => void;
   onRestoreCase: (caseId: string) => void;
+  onMoveCase: (caseId: string) => void;
 };
 
 const sourceIcons: Record<CaseSource, React.FC<any>> = {
@@ -38,7 +39,7 @@ const sourceIcons: Record<CaseSource, React.FC<any>> = {
   Unknown: HelpCircle
 };
 
-export function CaseCard({ caseItem, agents, onAssignCase, onRestoreCase }: CaseCardProps) {
+export function CaseCard({ caseItem, agents, onAssignCase, onRestoreCase, onMoveCase }: CaseCardProps) {
   const SourceIcon = sourceIcons[caseItem.source as CaseSource] || HelpCircle;
 
   const priorityColor = {
@@ -120,6 +121,17 @@ export function CaseCard({ caseItem, agents, onAssignCase, onRestoreCase }: Case
                     <Button variant="ghost" size="icon" className="h-7 w-7"><UserPlus className="h-4 w-4" /></Button>
                   </AssignAgentDialog>
                   <Button variant="ghost" size="icon" className="h-7 w-7"><Reply className="h-4 w-4" /></Button>
+                  {caseItem.status === 'All Assigned' && (
+                     <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-7 w-7"
+                        onClick={() => onMoveCase(caseItem.id)}
+                        title="Move to Demo"
+                    >
+                        <Move className="h-4 w-4" />
+                     </Button>
+                  )}
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
             </>
