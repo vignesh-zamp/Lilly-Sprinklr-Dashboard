@@ -33,7 +33,7 @@ export default function DashboardPage() {
         const { uniqueId, ...caseData } = caseItem;
 
         // Firestore does not accept 'undefined'. Convert to 'null'.
-        const casePayload = { ...caseData };
+        const casePayload: any = { ...caseData };
         if (casePayload.assignee === undefined) {
           casePayload.assignee = null;
         }
