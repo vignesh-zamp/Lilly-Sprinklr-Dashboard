@@ -22,8 +22,10 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   const { toast } = useToast();
   const firestore = useFirestore();
 
-  const caseRef = firestore ? doc(firestore, "cases", id) : null;
-  const { data: caseData, isLoading } = useDoc<Case>(caseRef);
+  // Always look for the original case document, even if a replicated one was clicked.
+  const originalCaseId = id.split('-demo-')[0];
+  const caseRef = firestore ? doc(firestore, "cases", originalCaseId) : null;
+  const { data: caseData, isLoading, error } = useDoc<Case>(caseRef);
 
   const handlePropertyChange = async (
     property: keyof CaseProperties | 'assignee',
@@ -110,10 +112,12 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   };
 
   useEffect(() => {
-    if (!isLoading && !caseData) {
+    // Only call notFound if loading is complete AND there's still no data AND no error.
+    // If there's an error, the hook will throw it, and we don't need to call notFound.
+    if (!isLoading && !caseData && !error) {
       notFound();
     }
-  }, [isLoading, caseData]);
+  }, [isLoading, caseData, error]);
 
   if (isLoading || !caseData) {
     return (
