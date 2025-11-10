@@ -99,14 +99,16 @@ export default function DashboardPage() {
 
     try {
         const batch = writeBatch(firestore);
+        const caseDataToReplicate = { ...originalCase };
+        delete (caseDataToReplicate as any).id; // Don't store the ID field inside the document
 
         // Replicate for "All Demo - Awaiting"
         const awaitingDemoRef = doc(firestore, 'cases', `${originalCase.id}-demo-awaiting`);
-        batch.set(awaitingDemoRef, { ...originalCase, status: 'All Demo - Awaiting' });
+        batch.set(awaitingDemoRef, { ...caseDataToReplicate, status: 'All Demo - Awaiting' });
 
         // Replicate for "Demo - Mentions"
         const mentionsDemoRef = doc(firestore, 'cases', `${originalCase.id}-demo-mentions`);
-        batch.set(mentionsDemoRef, { ...originalCase, status: 'Demo - Mentions' });
+        batch.set(mentionsDemoRef, { ...caseDataToReplicate, status: 'Demo - Mentions' });
 
         await batch.commit();
 
@@ -119,7 +121,7 @@ export default function DashboardPage() {
         const permissionError = new FirestorePermissionError({
           path: 'cases', // This is a batch, so path is generic
           operation: 'write',
-          requestResourceData: { info: 'Batch operation to replicate case' }
+          requestResourceData: { info: `Batch operation to replicate case ${caseId}` }
         });
         errorEmitter.emit('permission-error', permissionError);
         toast({

@@ -49,13 +49,16 @@ export function CaseCard({ caseItem, agents, onAssignCase, onRestoreCase, onMove
     'low': 'text-green-500',
   }[caseItem.properties.priority.toLowerCase()] || 'text-muted-foreground';
 
+  // For replicated cases, link back to the original case ID
+  const originalCaseId = caseItem.id.split('-demo-')[0];
+
   return (
     <Card className="bg-card w-[360px] text-sm rounded-none border-x-0 border-t-0 border-b flex flex-col">
         <div className="flex-grow">
-            <Link href={`/case/${caseItem.id}`} className="block h-full">
+            <Link href={`/case/${originalCaseId}`} className="block h-full">
                 <CardHeader className="p-3 flex-row items-start justify-between">
                     <div className="font-semibold text-primary hover:underline whitespace-nowrap overflow-hidden text-ellipsis mr-2">
-                        Case #{caseItem.id}
+                        Case #{originalCaseId}
                     </div>
                     <div className='flex items-center gap-2'>
                     <SourceIcon className="h-4 w-4 text-muted-foreground" />
