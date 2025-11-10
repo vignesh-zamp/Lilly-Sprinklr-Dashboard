@@ -3,13 +3,14 @@
 
 import { useState, useEffect } from 'react';
 import { CaseColumn } from '@/components/dashboard/case-column';
-import { agents } from '@/lib/mock-data';
+import { agents, initialCases } from '@/lib/mock-data';
 import type { Case, CaseStatus, Agent } from '@/lib/types';
 import { caseStatuses } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -20,6 +21,32 @@ export default function DashboardPage() {
     user ? collection(firestore, 'cases') : null
   );
 
+  const handleSeedDatabase = async () => {
+    if (!firestore) return;
+    try {
+      const batch = writeBatch(firestore);
+      initialCases.forEach((caseItem) => {
+        // Use the original case ID for the document ID
+        const caseRef = doc(firestore, 'cases', caseItem.id);
+        const { uniqueId, ...caseData } = caseItem;
+        batch.set(caseRef, caseData);
+      });
+      await batch.commit();
+      toast({
+        title: 'Database Seeded',
+        description: 'The initial case data has been loaded into Firestore.',
+      });
+    } catch (error) {
+      console.error("Error seeding database: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not seed the database.',
+      });
+    }
+  };
+
+
   const handleAssignCase = async (caseId: string, agent: Agent) => {
     if (!firestore || !user) return;
   
@@ -28,20 +55,27 @@ export default function DashboardPage() {
     try {
       const batch = writeBatch(firestore);
       
-      // Update the main case document
-      batch.update(caseRef, { 'assignee.id': agent.id, 'assignee.name': agent.name, 'assignee.email': agent.email, 'assignee.avatarUrl': agent.avatarUrl });
-  
+      const updatePayload: any = { 
+        assignee: { 
+            id: agent.id, 
+            name: agent.name, 
+            email: agent.email, 
+            avatarUrl: agent.avatarUrl 
+        } 
+      };
+
       // If assigned to Pace, update status
       if (agent.email === 'pace@zamp.ai') {
-        batch.update(caseRef, { status: 'Assigned to Pace' });
+        updatePayload.status = 'Assigned to Pace';
       } else {
-        // If it was assigned to pace, move it back to 'All Assigned'
         const currentCase = cases?.find(c => c.id === caseId);
+        // If it was assigned to pace, move it back to 'All Assigned'
         if (currentCase?.status === 'Assigned to Pace') {
-            batch.update(caseRef, { status: 'All Assigned' });
+            updatePayload.status = 'All Assigned';
         }
       }
       
+      batch.update(caseRef, updatePayload);
       await batch.commit();
   
       toast({
@@ -99,21 +133,32 @@ export default function DashboardPage() {
   }
 
   return (
-    <ScrollArea className="w-full whitespace-nowrap bg-background">
-      <div className="flex w-max h-[calc(100vh-4rem)]">
-        {(caseStatuses || []).map((status, index) => (
-          <CaseColumn
-            key={status}
-            title={status}
-            cases={cases?.filter((c) => c.status === status) || []}
-            agents={agents}
-            onAssignCase={handleAssignCase}
-            onRestoreCase={handleRestoreCase}
-            isFirst={index === 0}
-          />
-        ))}
-      </div>
-       <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+    <>
+    {cases && cases.length === 0 && !isLoading && (
+        <div className="container mx-auto text-center py-10">
+          <h2 className="text-2xl font-semibold mb-4">Welcome to Your Dashboard!</h2>
+          <p className="text-muted-foreground mb-6">It looks like your database is empty. Please seed it with the initial case data.</p>
+          <Button onClick={handleSeedDatabase} size="lg">Seed Database</Button>
+        </div>
+      )}
+    {cases && cases.length > 0 && (
+      <ScrollArea className="w-full whitespace-nowrap bg-background">
+        <div className="flex w-max h-[calc(100vh-4rem)]">
+          {(caseStatuses || []).map((status, index) => (
+            <CaseColumn
+              key={status}
+              title={status}
+              cases={cases?.filter((c) => c.status === status) || []}
+              agents={agents}
+              onAssignCase={handleAssignCase}
+              onRestoreCase={handleRestoreCase}
+              isFirst={index === 0}
+            />
+          ))}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    )}
+    </>
   );
 }
