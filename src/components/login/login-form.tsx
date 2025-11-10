@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
 
 export function LoginForm() {
   const router = useRouter();
@@ -38,9 +39,10 @@ export function LoginForm() {
   };
 
   return (
+    <div className="space-y-4">
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" className="font-semibold">Email</Label>
         <Input
           id="email"
           type="email"
@@ -60,9 +62,17 @@ export function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full bg-[#1DA1F2] hover:bg-[#1A91DA]" disabled={isLoading}>
         {isLoading ? 'Signing In...' : 'Sign In'}
       </Button>
     </form>
+    <Card className="bg-muted">
+        <CardContent className="p-4 text-center text-sm text-muted-foreground">
+            <p className="font-semibold">Demo Credentials</p>
+            <p>Email: sherina@example.com</p>
+            <p>Password: demo123</p>
+        </CardContent>
+    </Card>
+    </div>
   );
 }
