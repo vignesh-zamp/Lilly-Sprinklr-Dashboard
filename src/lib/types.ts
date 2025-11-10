@@ -26,7 +26,7 @@ export const caseStatuses = [
 
 export type CaseStatus = (typeof caseStatuses)[number];
 
-export type CaseSource = 'Twitter' | 'Facebook' | 'Email' | 'Chat' | 'Unknown' | 'Instagram' | 'TikTok';
+export type CaseSource = 'Twitter' | 'Meta' | 'Email' | 'Chat' | 'Unknown' | 'Instagram' | 'TikTok';
 
 export type CaseProperties = {
   status: 'Open' | 'Pending' | 'Resolved' | 'Closed';
@@ -136,11 +136,15 @@ export const propertyOptions = {
     "Tempo",
     "Trials",
     "Zepbound",
-    "Zepbound Vial"
+    "Zepbound Vial",
+    "Basaglar",
+    "Cyramza",
+    "Humalog"
   ],
   compliance: [
     "AE",
     "AE and PC",
+    "PC",
     "Compounding",
     "Dosage Manipulation",
     "Fraud/Counterfeit",
@@ -173,3 +177,4 @@ export const propertyOptions = {
     "General Inquiry"
   ]
 } as const;
+    

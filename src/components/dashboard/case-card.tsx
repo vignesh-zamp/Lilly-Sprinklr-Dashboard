@@ -17,6 +17,7 @@ type CaseCardProps = {
 
 const sourceIcons: Record<CaseSource, React.FC<any>> = {
   Twitter: (props) => <TwitterIcon {...props} />,
+  Meta: Facebook,
   Facebook: Facebook,
   Email: Mail,
   Chat: MessageSquare,
@@ -109,3 +110,4 @@ export function CaseCard({ caseItem, agents, onAssignCase }: CaseCardProps) {
     </Card>
   );
 }
+    

@@ -60,11 +60,25 @@ const casePropertiesMap: { [key: string]: Partial<Case['properties']> } = {
     '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed', region: 'CA' },
 };
 
+const getComplianceTag = (reportType: string): string[] => {
+    if (reportType === "AE" || reportType === "PC" || reportType === "AE and PC") {
+        return [reportType];
+    }
+    return [];
+};
+
 
 const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
     const { name, handle } = parseReporter(rawCase.reporter_information);
     const assignedAgent = getAgent(rawCase.lilly_agent_assigned);
     const extraProps = casePropertiesMap[rawCase.case_id] || {};
+
+    let channel = rawCase.channel;
+    if (rawCase.channel === 'Unknown') {
+        channel = 'Twitter';
+    } else if (rawCase.channel === 'Facebook') {
+        channel = 'Meta';
+    }
     
     return {
         id: rawCase.case_id,
@@ -73,7 +87,7 @@ const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
         status: 'All Assigned', // Default status
         assignee: assignedAgent,
         createdAt: formatDistanceToNow(new Date(rawCase.receipt_date), { addSuffix: true }),
-        source: rawCase.channel,
+        source: channel,
         user: {
             name: name,
             handle: handle,
@@ -87,14 +101,15 @@ const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
             priority: 'medium',
             slaStatus: 'On Track',
             report_type: rawCase.report_type,
-            lilly_products: rawCase.lilly_products,
+            lilly_products: rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : [],
+            audience: rawCase.respondent_type ? [rawCase.respondent_type] : [],
+            compliance: getComplianceTag(rawCase.report_type),
             language: 'English',
-            tags: rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : [],
+            tags: [], // Deprecated, but kept for type safety
             country: 'Unknown',
             associated_messages: 1,
             customStatus: 'assigned',
-            // From image
-            channel: rawCase.channel,
+            channel: channel,
             region: 'FRANCE',
             issueType: 'Click to Add',
             themeMatches: 'Click to Add',
@@ -164,3 +179,4 @@ export const initialCases: Case[] = finalCases;
 export const getCaseById = (id: string): Case | undefined => {
   return allCases.find(c => c.id === id);
 };
+    

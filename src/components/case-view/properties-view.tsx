@@ -118,6 +118,7 @@ const PropertyRow = ({ label, value, hasInfo = false, isClickable=false }: { lab
 
 const sourceIcons: Record<CaseSource, React.FC<any>> = {
   Twitter: (props) => <TwitterIcon {...props} />,
+  Meta: Facebook,
   Facebook: Facebook,
   Email: Mail,
   Chat: MessageSquare,
@@ -138,11 +139,18 @@ const sourceIcons: Record<CaseSource, React.FC<any>> = {
 
 const ChannelSection = ({ source }: { source: string }) => {
     const SourceIcon = sourceIcons[source as CaseSource] || HelpCircle;
+    let channelName = source;
+    if (source === 'Twitter') {
+        channelName = "X (Formerly Twitter)"
+    } else if (source === 'Meta') {
+        channelName = "Meta"
+    }
+
     return (
         <PropertySection title="Channel" defaultOpen>
             <div className="flex items-center gap-2 text-sm">
                 <SourceIcon className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium">{source}</span>
+                <span className="font-medium">{channelName}</span>
             </div>
         </PropertySection>
     );
@@ -289,5 +297,4 @@ export function PropertiesView({ properties, assignee, agents, onPropertyChange 
     </aside>
   );
 }
-
     
