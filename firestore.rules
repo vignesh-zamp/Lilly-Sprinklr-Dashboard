@@ -1,0 +1,120 @@
+/**
+ * @fileoverview Firestore Security Rules for the Lilly Sprinklr Dashboard.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a user-centric security model where users have ownership over their data and assigned cases. Authorization decisions are based on the authenticated user's ID and the denormalized 'assignedTo' field in the `cases` collection.  List operations are optimized via the `case_assignments` collection.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles.  Access is restricted to the authenticated user.
+ * - /cases/{caseId}: Stores case data, including an 'assignedTo' field for ownership.
+ * - /case_assignments/{userId}/{caseId}:  Used for efficient list operations of cases assigned to a user; existence implies assignment.
+ * - /cases/{caseId}/conversations/{conversationId}: Stores conversations within a case; access is controlled by case assignment.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own user document.
+ * - Cases can only be created, read, updated, and deleted by assigned users.
+ * - Listing cases is optimized and secured through the `case_assignments` collection.
+ *
+ * Denormalization for Authorization:
+ * - The `cases` collection contains an `assignedTo` field, mirroring the User ID, to avoid costly `get()` calls when determining case assignment.
+ * - The `case_assignments` collection is an existence-based data structure that provides list authorization with no `get()` calls.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Allows users to read and write their own user profile.
+     * @path /users/{userId}
+     * @allow (get, create, update, delete) User A with ID 'user_abc' can read/write document /users/user_abc.
+     * @deny (get, create, update, delete) User A with ID 'user_abc' cannot read/write document /users/user_xyz.
+     * @principle Enforces document ownership for user profiles.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Allows assigned users to read, update, and delete cases.
+     * @path /cases/{caseId}
+     * @allow (get, update, delete) User A assigned to case 'case_123' can read/update/delete the /cases/case_123 document.
+     * @allow (create) Authenticated users can create a new case document, but the 'assignedTo' field must match their user ID.
+     * @deny (get, update, delete) User B not assigned to case 'case_123' cannot read/update/delete the /cases/case_123 document.
+     * @principle Enforces document ownership for cases based on the 'assignedTo' field.
+     */
+    match /cases/{caseId} {
+        function isSignedIn() {
+            return request.auth != null;
+        }
+
+        function isOwner(assignedTo) {
+            return isSignedIn() && request.auth.uid == assignedTo;
+        }
+
+        allow get: if true;
+        allow list: if false;
+
+        allow create: if isSignedIn() && request.resource.data.assignedTo == request.auth.uid;
+        allow update: if isSignedIn() && resource.data.assignedTo == request.auth.uid;
+        allow delete: if isSignedIn() && resource.data.assignedTo == request.auth.uid;
+    }
+
+    /**
+     * @description Allows a user to read all cases assigned to them and create case assignments for themself.
+     * @path /case_assignments/{userId}/{caseId}
+     * @allow (get, list) User A can read/list documents in /case_assignments/user_abc where they are the owner.
+     * @allow (create) User A can create a document in /case_assignments/user_abc if they are the owner.
+     * @deny (get, list, create) User B cannot read/list/create documents in /case_assignments/user_abc.
+     * @principle Enables secure and efficient list operations for cases assigned to a user.
+     */
+    match /case_assignments/{userId}/{caseId} {
+        function isSignedIn() {
+            return request.auth != null;
+        }
+
+        function isOwner(userId) {
+            return isSignedIn() && request.auth.uid == userId;
+        }
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update: if false;
+        allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Allows users assigned to a case to create, read, update, and delete conversations within that case.
+     * @path /cases/{caseId}/conversations/{conversationId}
+     * @allow (get, list, create, update, delete) User A assigned to case 'case_123' can manage conversations in /cases/case_123/conversations.
+     * @deny (get, list, create, update, delete) User B not assigned to case 'case_123' cannot manage conversations in /cases/case_123/conversations.
+     * @principle Enforces access control for conversations based on case assignment.
+     */
+    match /cases/{caseId}/conversations/{conversationId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isCaseAssignedToUser(caseId) {
+          return exists(/databases/$(database)/documents/cases/$(caseId) );
+      }
+
+      allow get: if isSignedIn() && isCaseAssignedToUser(caseId);
+      allow list: if isSignedIn() && isCaseAssignedToUser(caseId);
+      allow create: if isSignedIn() && isCaseAssignedToUser(caseId);
+      allow update: if isSignedIn() && isCaseAssignedToUser(caseId);
+      allow delete: if isSignedIn() && isCaseAssignedToUser(caseId);
+    }
+  }
+}

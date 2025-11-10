@@ -1,0 +1,216 @@
+{
+  "entities": {
+    "Case": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Case",
+      "type": "object",
+      "description": "Represents a case in the Lilly Sprinklr Dashboard.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the case."
+        },
+        "caseId": {
+          "type": "string",
+          "description": "The case ID as displayed in the UI."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title or subject of the case."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the case."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the case (e.g., 'Awaiting Response', 'Closed')."
+        },
+        "assignedTo": {
+          "type": "string",
+          "description": "Reference to the User entity that the case is assigned to. (Relationship: User 1:N Case)"
+        },
+        "column": {
+          "type": "string",
+          "description": "The column the case is currently in (e.g., 'Assigned to Pace', 'All Demo - Awaiting')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time the case was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time the case was last updated.",
+          "format": "date-time"
+        },
+        "properties": {
+          "type": "string",
+          "description": "JSON string containing all case properties."
+        },
+        "conversations": {
+          "type": "array",
+          "description": "References to all conversations linked to this case. (Relationship: Case 1:N Conversation)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "caseId",
+        "title",
+        "description",
+        "status",
+        "column",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user who can be assigned cases.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "name"
+      ]
+    },
+    "Conversation": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Conversation",
+      "type": "object",
+      "description": "Represents a conversation entry within a case.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the conversation entry."
+        },
+        "caseId": {
+          "type": "string",
+          "description": "Reference to the Case that this conversation belongs to. (Relationship: Case 1:N Conversation)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created the conversation entry. (Relationship: User 1:N Conversation)"
+        },
+        "message": {
+          "type": "string",
+          "description": "The text of the conversation entry."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time the conversation entry was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "caseId",
+        "userId",
+        "message",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information.  The userId is derived from `request.auth.uid`. Access is restricted to the authenticated user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cases/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/backend/entities/Case"
+          },
+          "description": "Stores case information. Includes denormalized 'assignedTo' field to indicate user assignment.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/case_assignments/{userId}/{caseId}",
+        "definition": {
+          "entityName": "Case",
+          "schema": {
+            "$ref": "#/backend/entities/Case"
+          },
+          "description": "Stores document references for each case assigned to the user. This is an existence based data structure where the mere existance of a doucment is enough to allow read access to the `case/{caseId}`.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/cases/{caseId}/conversations/{conversationId}",
+        "definition": {
+          "entityName": "Conversation",
+          "schema": {
+            "$ref": "#/backend/entities/Conversation"
+          },
+          "description": "Stores conversations related to a specific case.",
+          "params": [
+            {
+              "name": "caseId",
+              "description": "The unique identifier for the case."
+            },
+            {
+              "name": "conversationId",
+              "description": "The unique identifier for the conversation."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "To persist case assignments and ensure data consistency across user sessions and devices for the Lilly Sprinklr Dashboard, we will leverage Firestore. The design prioritizes Authorization Independence and supports the required application features, including case assignments and column management.\n\n**Data Structure Explanation:**\n\n1.  **/users/{userId}**: Stores user profile information (email, name). The userId is derived from `request.auth.uid`. Access is restricted to the authenticated user or admins.\n\n2.  **/cases/{caseId}**: This collection stores all case documents. Key attributes like `assignedTo` are stored directly within the case document to enable efficient queries and avoid the need for collection group queries to identify cases assigned to a specific user. Access control is governed by the 'assignedTo' field, which mirrors the user ID, enabling easy verification in security rules.\n\n3. **/case_assignments/{userId}**: This collection is designed to facilitate efficient listing of cases assigned to a user. Each document's ID represents a case ID, and the existence of a document signals that the corresponding case is assigned to the user. This approach enables simple existence checks in rules, ensuring secure list operations. To ensure Authorization Independence, the user's role is denormalized into each document within this collection. This avoids the need for `get()` calls in security rules, ensuring that atomic operations (transactions/batches) are not broken and debugging is simplified.\n\n**Authorization Independence (Denormalization):**\n\nThe `cases` collection includes the `assignedTo` field which contains the User ID. This denormalization ensures that security rules can directly evaluate user assignments without needing to perform costly `get()` operations to retrieve user data or role information from other collections.\n\nThe `case_assignments` collection will also include a denormalized role from the `users/{userId}` collection. This ensures that security rules can directly evaluate user assignments without needing to perform costly `get()` operations to retrieve user data or role information from other collections.\n\n**QAPs (Rules are not Filters):**\n\nThe `case_assignments/{userId}` collection is specifically designed to support secure and efficient list operations (QAPs). By creating a subcollection keyed by the `userId`, we enable rules to quickly verify user access without scanning the entire `cases` collection.\n\n**Security Rules:**\n\n*   Users can only read/write their own user document (`/users/{userId}`).\n*   Cases can only be created by authenticated users.\n*   Cases can only be read by the user to whom they are assigned.\n*   Only assigned user can update the case.\n\nThis structure facilitates simple and robust security rules, enhances query performance, and avoids complex rule logic that could lead to security vulnerabilities."
+  }
+}
