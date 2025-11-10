@@ -139,7 +139,9 @@ export const propertyOptions = {
     "Zepbound Vial",
     "Basaglar",
     "Cyramza",
-    "Humalog"
+    "Humalog",
+    "Alimta",
+    "Retevmo"
   ],
   compliance: [
     "AE",
@@ -164,7 +166,9 @@ export const propertyOptions = {
     "Product-Experience-P",
     "Medfinder-P",
     "Side Effects",
-    "Dosage Questions"
+    "Dosage Questions",
+    "Device Issue",
+    "Testimonial"
   ],
   brand: [
     "Brand A",

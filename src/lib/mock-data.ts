@@ -42,22 +42,22 @@ const casePropertiesMap: { [key: string]: Partial<Case['properties']> } = {
     '56': { priority: 'very high', country: 'FRANCE', associated_messages: 1, customStatus: 'new', region: 'FRANCE' },
     '57': { priority: 'medium', country: 'FRANCE', associated_messages: 2, customStatus: 'assigned', region: 'FRANCE' },
     '127001': { priority: 'high', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
-    '127002': { priority: 'very high', country: 'US', associated_messages: 1, customStatus: 'new', region: 'US' },
-    '127003': { priority: 'medium', country: 'UK', associated_messages: 2, customStatus: 'in progress', region: 'UK' },
+    '127002': { priority: 'very high', country: 'US', associated_messages: 1, customStatus: 'new', region: 'US', audience: ["Health Care Provider"] },
+    '127003': { priority: 'medium', country: 'UK', associated_messages: 2, customStatus: 'in progress', region: 'UK', topicGeneral: ["Device Issue"] },
     '127004': { priority: 'very high', country: 'CA', associated_messages: 1, customStatus: 'assigned', region: 'CA' },
     '127005': { priority: 'medium', country: 'FR', associated_messages: 3, customStatus: 'assigned', region: 'FR' },
     '127006': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
-    '127007': { priority: 'medium', country: 'CA', associated_messages: 4, customStatus: 'closed', region: 'CA' },
+    '127007': { priority: 'medium', country: 'CA', associated_messages: 4, customStatus: 'closed', region: 'CA', lilly_products: ["Alimta"] },
     '127008': { priority: 'high', country: 'US', associated_messages: 2, customStatus: 'assigned', region: 'US' },
-    '127009': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
-    '127010': { priority: 'high', country: 'US', associated_messages: 5, customStatus: 'in progress', region: 'US' },
-    '127011': { priority: 'very high', country: 'UK', associated_messages: 2, customStatus: 'assigned', region: 'UK' },
-    '127012': { priority: 'low', country: 'CA', associated_messages: 1, customStatus: 'closed', region: 'CA' },
+    '127009': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US', audience: ["Careers-Graduate"] },
+    '127010': { priority: 'high', country: 'US', associated_messages: 5, customStatus: 'in progress', region: 'US', audience: ["Business Partner/Provider"] },
+    '127011': { priority: 'very high', country: 'UK', associated_messages: 2, customStatus: 'assigned', region: 'UK', lilly_products: ["Cyramza"] },
+    '127012': { priority: 'low', country: 'CA', associated_messages: 1, customStatus: 'closed', region: 'CA', topicGeneral: ["Testimonial"] },
     '127013': { priority: 'very high', country: 'US', associated_messages: 3, customStatus: 'assigned', region: 'US' },
     '127014': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
     '127015': { priority: 'medium', country: 'US', associated_messages: 2, customStatus: 'assigned', region: 'US' },
     '127016': { priority: 'medium', country: 'US', associated_messages: 6, customStatus: 'closed', region: 'US' },
-    '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed', region: 'CA' },
+    '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed', region: 'CA', lilly_products: ["Retevmo"] },
 };
 
 const getComplianceTag = (reportType: string): string[] => {
@@ -79,6 +79,8 @@ const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
     } else if (rawCase.channel === 'Facebook') {
         channel = 'Meta';
     }
+
+    const initialAudience = rawCase.respondent_type ? (rawCase.respondent_type === "HCP" ? ["Health Care Provider"] : [rawCase.respondent_type]) : [];
     
     return {
         id: rawCase.case_id,
@@ -102,7 +104,7 @@ const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
             slaStatus: 'On Track',
             report_type: rawCase.report_type,
             lilly_products: rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : [],
-            audience: rawCase.respondent_type ? [rawCase.respondent_type] : [],
+            audience: initialAudience,
             compliance: getComplianceTag(rawCase.report_type),
             language: 'English',
             tags: [], // Deprecated, but kept for type safety
@@ -126,7 +128,11 @@ const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
             posterConsent: rawCase.poster_consent,
             posterContactInfo: rawCase.poster_contact_info,
             lotControlNumber: `#${rawCase.lot_control_number} (Unknown)`,
-            ...extraProps
+            ...extraProps,
+            // Make sure arrays are merged correctly, not overwritten
+            audience: Array.from(new Set([...initialAudience, ...extraProps.audience || []])),
+            lilly_products: Array.from(new Set([...(rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : []), ...Array.isArray(extraProps.lilly_products) ? extraProps.lilly_products : (extraProps.lilly_products ? [extraProps.lilly_products] : [])])),
+            topicGeneral: extraProps.topicGeneral || [],
         },
     };
 });
