@@ -1,3 +1,4 @@
+
 import type { Agent, Case, CaseProperties } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
@@ -210,19 +211,6 @@ export function PropertiesView({ properties, assignee, agents, onPropertyChange 
 
             <Card>
                 <CardContent className="p-3 space-y-4 text-sm">
-                    <ChannelSection source={properties.channel} />
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardContent className="p-3 space-y-4 text-sm">
-                    <PropertiesListSection properties={properties} />
-                </CardContent>
-            </Card>
-
-
-            <Card>
-                <CardContent className="p-3 space-y-4 text-sm">
                     <PropertySection title="Tags" defaultOpen>
                         <PropertyMultiSelect 
                             title="Corporate"
@@ -284,8 +272,22 @@ export function PropertiesView({ properties, assignee, agents, onPropertyChange 
                 </CardContent>
             </Card>
 
+            <Card>
+                <CardContent className="p-3 space-y-4 text-sm">
+                    <ChannelSection source={properties.channel} />
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardContent className="p-3 space-y-4 text-sm">
+                    <PropertiesListSection properties={properties} />
+                </CardContent>
+            </Card>
+
         </div>
       </ScrollArea>
     </aside>
   );
 }
+
+    
