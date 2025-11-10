@@ -135,6 +135,7 @@ export function MacroDialog({ caseData, agents, onPropertyChange, onPropertyRemo
     };
     
     const handleApplyAndClose = () => {
+        // This will now trigger the promise chain in `handleStatusChange`
         onStatusChange('All closed');
         setShowApplyClosed(false);
         setMainOpen(false);

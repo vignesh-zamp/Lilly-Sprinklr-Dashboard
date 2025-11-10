@@ -11,6 +11,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -44,6 +46,12 @@ export default function DashboardPage() {
       });
     } catch (error) {
       console.error("Error seeding database: ", error);
+      const permissionError = new FirestorePermissionError({
+        path: 'cases',
+        operation: 'write',
+        requestResourceData: initialCases
+      });
+      errorEmitter.emit('permission-error', permissionError);
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -58,65 +66,75 @@ export default function DashboardPage() {
   
     const caseRef = doc(firestore, 'cases', caseId);
     
-    try {
-      const batch = writeBatch(firestore);
-      
-      const updatePayload: any = { 
-        assignee: { 
-            id: agent.id, 
-            name: agent.name, 
-            email: agent.email, 
-            avatarUrl: agent.avatarUrl 
-        } 
-      };
+    const updatePayload: any = { 
+      assignee: { 
+          id: agent.id, 
+          name: agent.name, 
+          email: agent.email, 
+          avatarUrl: agent.avatarUrl 
+      } 
+    };
 
-      // If assigned to Pace, update status
-      if (agent.email === 'pace@zamp.ai') {
-        updatePayload.status = 'Assigned to Pace';
-      } else {
-        const currentCase = cases?.find(c => c.id === caseId);
-        // If it was assigned to pace, move it back to 'All Assigned'
-        if (currentCase?.status === 'Assigned to Pace') {
-            updatePayload.status = 'All Assigned';
-        }
+    // If assigned to Pace, update status
+    if (agent.email === 'pace@zamp.ai') {
+      updatePayload.status = 'Assigned to Pace';
+    } else {
+      const currentCase = cases?.find(c => c.id === caseId);
+      // If it was assigned to pace, move it back to 'All Assigned'
+      if (currentCase?.status === 'Assigned to Pace') {
+          updatePayload.status = 'All Assigned';
       }
-      
-      batch.update(caseRef, updatePayload);
-      await batch.commit();
-  
-      toast({
-        title: 'Case Assigned',
-        description: `Case #${caseId} has been assigned to ${agent.name}.`,
-      });
-    } catch (error) {
-      console.error("Error assigning case: ", error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not assign case.',
-      });
     }
+    
+    updateDoc(caseRef, updatePayload)
+      .then(() => {
+        toast({
+          title: 'Case Assigned',
+          description: `Case #${caseId} has been assigned to ${agent.name}.`,
+        });
+      })
+      .catch((error) => {
+        console.error("Error assigning case: ", error);
+        const permissionError = new FirestorePermissionError({
+          path: caseRef.path,
+          operation: 'update',
+          requestResourceData: updatePayload
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not assign case.',
+        });
+      });
   };
 
   const handleRestoreCase = async (caseId: string) => {
     if (!firestore) return;
     const caseRef = doc(firestore, 'cases', caseId);
-    try {
-        await updateDoc(caseRef, {
-            status: 'All Assigned'
+    const updatePayload = { status: 'All Assigned' };
+
+    updateDoc(caseRef, updatePayload)
+        .then(() => {
+            toast({
+                title: "Case Restored",
+                description: `Case #${caseId} has been restored to "All Assigned".`
+            });
+        })
+        .catch((error) => {
+            console.error("Error restoring case: ", error);
+            const permissionError = new FirestorePermissionError({
+              path: caseRef.path,
+              operation: 'update',
+              requestResourceData: updatePayload
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not restore case.',
+            });
         });
-        toast({
-            title: "Case Restored",
-            description: `Case #${caseId} has been restored to "All Assigned".`
-        });
-    } catch (error) {
-        console.error("Error restoring case: ", error);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not restore case.',
-        });
-    }
   };
 
 

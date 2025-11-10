@@ -11,7 +11,9 @@ import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useDoc, useFirestore } from "@/firebase";
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { errorEmitter } from "@/firebase/error-emitter";
+import { FirestorePermissionError } from "@/firebase/errors";
 
 export default function CasePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
@@ -29,74 +31,82 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   ) => {
     if (!caseRef) return;
 
-    try {
-      if (property === 'assignee') {
-        const agent = agents.find(a => a.id === value);
-        if (agent) {
-          await updateDoc(caseRef, { assignee: agent });
-          toast({
-            title: 'Case Assigned',
-            description: `Case #${id} has been assigned to ${agent.name}.`,
+    let updatePayload: { [key: string]: any } = {};
+
+    if (property === 'assignee') {
+      const agent = agents.find(a => a.id === value);
+      if (agent) {
+        updatePayload = { assignee: agent };
+        updateDoc(caseRef, updatePayload)
+          .then(() => {
+            toast({
+              title: 'Case Assigned',
+              description: `Case #${id} has been assigned to ${agent.name}.`,
+            });
+          })
+          .catch((error) => {
+            console.error("Error updating property: ", error);
+            const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({ variant: "destructive", title: "Error", description: "Could not assign case." });
           });
-        }
-      } else {
-         const currentValues = (caseData?.properties as any)?.[property] || [];
-         if (Array.isArray(currentValues) && !currentValues.includes(value)) {
-             await updateDoc(caseRef, { [`properties.${property}`]: arrayUnion(value) });
-         } else if (!Array.isArray(currentValues)) {
-            await updateDoc(caseRef, { [`properties.${property}`]: value });
-         }
       }
-    } catch (error) {
-      console.error("Error updating property: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not update case property.",
-      });
+    } else {
+      const currentValues = (caseData?.properties as any)?.[property] || [];
+      if (Array.isArray(currentValues) && !currentValues.includes(value)) {
+        updatePayload = { [`properties.${property}`]: arrayUnion(value) };
+      } else if (!Array.isArray(currentValues)) {
+        updatePayload = { [`properties.${property}`]: value };
+      } else {
+        return; // Value already exists, no update needed
+      }
+      
+      updateDoc(caseRef, updatePayload)
+        .catch((error) => {
+          console.error("Error updating property: ", error);
+          const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
+          errorEmitter.emit('permission-error', permissionError);
+          toast({ variant: "destructive", title: "Error", description: "Could not update case property." });
+        });
     }
   };
   
-    const handlePropertyRemove = async (
-        property: keyof CaseProperties,
-        value: any
-    ) => {
-        if (!caseRef || !caseData) return;
+  const handlePropertyRemove = async (
+    property: keyof CaseProperties,
+    value: any
+  ) => {
+    if (!caseRef || !caseData) return;
 
-        const currentValues = (caseData.properties as any)[property];
-        if (Array.isArray(currentValues)) {
-            const newValues = currentValues.filter(v => v !== value);
-            try {
-                await updateDoc(caseRef, { [`properties.${property}`]: newValues });
-            } catch (error) {
-                console.error("Error removing property value: ", error);
-                 toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Could not update case property.",
-                });
-            }
-        }
-    };
-
+    const currentValues = (caseData.properties as any)[property];
+    if (Array.isArray(currentValues)) {
+      const updatePayload = { [`properties.${property}`]: arrayRemove(value) };
+      updateDoc(caseRef, updatePayload)
+        .catch((error) => {
+          console.error("Error removing property value: ", error);
+          const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
+          errorEmitter.emit('permission-error', permissionError);
+          toast({ variant: "destructive", title: "Error", description: "Could not update case property." });
+        });
+    }
+  };
 
   const handleStatusChange = async (newStatus: CaseStatus) => {
     if (!caseRef) return;
-    try {
-      await updateDoc(caseRef, { status: newStatus });
-      toast({
-        title: 'Case Status Changed',
-        description: `Case #${id} has been moved to "${newStatus}".`
+    const updatePayload = { status: newStatus };
+    updateDoc(caseRef, updatePayload)
+      .then(() => {
+        toast({
+          title: 'Case Status Changed',
+          description: `Case #${id} has been moved to "${newStatus}".`
+        });
+        router.push('/dashboard');
+      })
+      .catch((error) => {
+        console.error("Error changing status: ", error);
+        const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({ variant: "destructive", title: "Error", description: "Could not change case status." });
       });
-      router.push('/dashboard');
-    } catch (error) {
-      console.error("Error changing status: ", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not change case status.",
-      });
-    }
   };
 
   useEffect(() => {
