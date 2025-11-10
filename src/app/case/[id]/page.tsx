@@ -11,18 +11,19 @@ import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CasePage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const [caseData, setCaseData] = useState<Case | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const foundCase = getCaseById(params.id);
+    const foundCase = getCaseById(id);
     if (foundCase) {
       setCaseData(foundCase);
     } else if (!isLoading) {
       notFound();
     }
     setIsLoading(false);
-  }, [params.id, isLoading]);
+  }, [id, isLoading]);
 
   const handlePropertyChange = (
     property: keyof Case["properties"] | 'assignee',
