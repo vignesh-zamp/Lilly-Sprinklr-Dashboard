@@ -46,55 +46,57 @@ export function CaseCard({ caseItem, agents, onAssignCase }: CaseCardProps) {
   }[caseItem.properties.priority.toLowerCase()] || 'text-muted-foreground';
 
   return (
-    <Card className="bg-card w-[360px] text-sm rounded-none border-x-0 border-t-0 border-b">
-        <CardHeader className="p-3 flex-row items-start justify-between">
-            <Link href={`/case/${caseItem.id}`} className="font-semibold text-primary hover:underline whitespace-nowrap overflow-hidden text-ellipsis mr-2">
-                Case #{caseItem.id}
-            </Link>
-            <div className='flex items-center gap-2'>
-              <SourceIcon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground flex-shrink-0">{caseItem.createdAt}</span>
-            </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-0">
-          <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8 border rounded-full">
-                 <AvatarImage src={caseItem.user.avatarUrl} alt={caseItem.user.name} />
-                <AvatarFallback className="bg-blue-500 text-white font-bold">{caseItem.user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                 <p className="font-semibold">{caseItem.user.name}</p>
-                 <p className="text-xs text-muted-foreground">{caseItem.user.handle}</p>
+    <Card className="bg-card w-[360px] text-sm rounded-none border-x-0 border-t-0 border-b flex flex-col">
+        <Link href={`/case/${caseItem.id}`} className="flex-grow">
+            <CardHeader className="p-3 flex-row items-start justify-between">
+                <div className="font-semibold text-primary hover:underline whitespace-nowrap overflow-hidden text-ellipsis mr-2">
+                    Case #{caseItem.id}
+                </div>
+                <div className='flex items-center gap-2'>
+                  <SourceIcon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground flex-shrink-0">{caseItem.createdAt}</span>
+                </div>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <div className="flex items-start gap-3">
+                  <Avatar className="h-8 w-8 border rounded-full">
+                     <AvatarImage src={caseItem.user.avatarUrl} alt={caseItem.user.name} />
+                    <AvatarFallback className="bg-blue-500 text-white font-bold">{caseItem.user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                     <p className="font-semibold">{caseItem.user.name}</p>
+                     <p className="text-xs text-muted-foreground">{caseItem.user.handle}</p>
+                  </div>
               </div>
-          </div>
-          <p className="mt-2 text-foreground/90 whitespace-normal break-words">{caseItem.preview}</p>
-          
-          <Link href={`/case/${caseItem.id}`} className="text-primary text-xs hover:underline mt-2 block">
-            View {caseItem.properties.associated_messages} Associated Message{caseItem.properties.associated_messages > 1 ? 's' : ''}
-          </Link>
+              <p className="mt-2 text-foreground/90 whitespace-normal break-words">{caseItem.preview}</p>
+              
+              <div className="text-primary text-xs hover:underline mt-2 block">
+                View {caseItem.properties.associated_messages} Associated Message{caseItem.properties.associated_messages > 1 ? 's' : ''}
+              </div>
 
-          <div className="mt-3 space-y-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <User className="h-3.5 w-3.5" />
-                <span>{caseItem.assignee ? `${caseItem.assignee.name} (${caseItem.assignee.email})` : 'Unassigned'}</span>
+              <div className="mt-3 space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <User className="h-3.5 w-3.5" />
+                    <span>{caseItem.assignee ? `${caseItem.assignee.name} (${caseItem.assignee.email})` : 'Unassigned'}</span>
+                  </div>
+                 <div className="flex items-center gap-2">
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    <span>{caseItem.assignee ? 'Universal Case Inbox' : 'Unified Routing'}</span>
+                  </div>
+                 <div className="flex items-center gap-2">
+                    <Flag className="h-3.5 w-3.5" />
+                    <span className="capitalize">{caseItem.properties.customStatus}</span>
+                    <span className={`${priorityColor}`}>•</span>
+                    <span className="capitalize">{caseItem.properties.priority}</span>
+                  </div>
+                   <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5" />
+                    <span>{caseItem.properties.country}</span>
+                  </div>
               </div>
-             <div className="flex items-center gap-2">
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>{caseItem.assignee ? 'Universal Case Inbox' : 'Unified Routing'}</span>
-              </div>
-             <div className="flex items-center gap-2">
-                <Flag className="h-3.5 w-3.5" />
-                <span className="capitalize">{caseItem.properties.customStatus}</span>
-                <span className={`${priorityColor}`}>•</span>
-                <span className="capitalize">{caseItem.properties.priority}</span>
-              </div>
-               <div className="flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5" />
-                <span>{caseItem.properties.country}</span>
-              </div>
-          </div>
-        </CardContent>
-        <CardFooter className="p-3 pt-0 flex items-center justify-between text-muted-foreground">
+            </CardContent>
+        </Link>
+        <CardFooter className="p-3 pt-0 flex items-center justify-between text-muted-foreground mt-auto">
           <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-7 w-7"><Edit className="h-4 w-4" /></Button>
               <AssignAgentDialog agents={agents} onAssign={(agent) => onAssignCase(caseItem.id, agent)}>
