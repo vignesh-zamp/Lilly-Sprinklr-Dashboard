@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useMemo } from "react";
 import { useRouter, notFound } from "next/navigation";
 import { agents } from "@/lib/mock-data";
 import type { Agent, Case, CaseProperties, CaseStatus } from "@/lib/types";
@@ -10,7 +10,7 @@ import { PropertiesView } from "@/components/case-view/properties-view";
 import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useDoc, useFirestore } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
@@ -23,9 +23,20 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   const firestore = useFirestore();
 
   // Always look for the original case document, even if a replicated one was clicked.
-  const originalCaseId = id.split('-demo-')[0];
-  const caseRef = firestore ? doc(firestore, "cases", originalCaseId) : null;
+  const originalCaseId = useMemo(() => id.split('-demo-')[0], [id]);
+
+  const caseRef = useMemoFirebase(() =>
+    firestore ? doc(firestore, "cases", originalCaseId) : null
+  , [firestore, originalCaseId]);
+
   const { data: caseData, isLoading, error } = useDoc<Case>(caseRef);
+
+  useEffect(() => {
+    if (!isLoading && !caseData && !error) {
+      notFound();
+    }
+  }, [isLoading, caseData, error]);
+
 
   const handlePropertyChange = async (
     property: keyof CaseProperties | 'assignee',
@@ -110,14 +121,6 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
         toast({ variant: "destructive", title: "Error", description: "Could not change case status." });
       });
   };
-
-  useEffect(() => {
-    // Only call notFound if loading is complete AND there's still no data AND no error.
-    // If there's an error, the hook will throw it, and we don't need to call notFound.
-    if (!isLoading && !caseData && !error) {
-      notFound();
-    }
-  }, [isLoading, caseData, error]);
 
   if (isLoading || !caseData) {
     return (
