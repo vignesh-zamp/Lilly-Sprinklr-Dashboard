@@ -48,6 +48,7 @@ export default function DashboardPage() {
   }, []);
 
   const handleAssignCase = (caseId: string, agent: Agent) => {
+    let wasCaseAssigned = false;
     setCases((currentCases) => {
       let caseAssigned = false;
       const updatedCases = currentCases.map((c) => {
@@ -85,16 +86,16 @@ export default function DashboardPage() {
              caseAssigned = true;
          }
       }
+      wasCaseAssigned = caseAssigned;
+      return updatedCases;
+    });
 
-      if (caseAssigned) {
+    if (wasCaseAssigned) {
         toast({
           title: 'Case Assigned',
           description: `Case #${caseId} has been assigned to ${agent.name}.`,
         });
-      }
-
-      return updatedCases;
-    });
+    }
   };
 
   const handleRestoreCase = (caseId: string) => {
@@ -112,12 +113,12 @@ export default function DashboardPage() {
             uniqueId: `${caseId}-All Assigned-${Date.now()}`
         });
 
-        toast({
-            title: "Case Restored",
-            description: `Case #${caseId} has been restored to "All Assigned".`
-        });
-
         return withoutClosed;
+    });
+
+    toast({
+        title: "Case Restored",
+        description: `Case #${caseId} has been restored to "All Assigned".`
     });
   };
 
