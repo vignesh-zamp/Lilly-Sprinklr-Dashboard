@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAuth, initiateEmailSignIn } from '@/firebase';
-import { AuthError } from 'firebase/auth';
+import { useAuth } from '@/firebase';
+import { AuthError, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 export function LoginForm() {
   const router = useRouter();
@@ -23,25 +23,53 @@ export function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
 
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: 'Authentication service is not available.',
+        });
+        setIsLoading(false);
+        return;
+    }
+
     try {
-      if (auth) {
-        await initiateEmailSignIn(auth, email, password);
-        // The onAuthStateChanged listener in FirebaseProvider will handle the redirect
+        // First, try to sign in
+        await signInWithEmailAndPassword(auth, email, password);
         toast({
           title: 'Login Successful',
           description: 'Redirecting to dashboard...',
         });
-      } else {
-        throw new Error("Auth service not available");
-      }
+        // The onAuthStateChanged listener will handle the redirect
     } catch (error) {
-      const authError = error as AuthError;
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: authError.message || 'Invalid email or password.',
-      });
-      setIsLoading(false);
+        const signInError = error as AuthError;
+        
+        // If user not found or password incorrect, try to create a new user
+        if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/wrong-password' || signInError.code === 'auth/invalid-credential') {
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                toast({
+                    title: 'Account Created',
+                    description: 'New user created successfully. Logging in...',
+                });
+                // The onAuthStateChanged listener will handle the redirect
+            } catch (signUpError: any) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Sign-Up Failed',
+                    description: signUpError.message || 'Could not create a new user.',
+                });
+                setIsLoading(false);
+            }
+        } else {
+            // Handle other sign-in errors
+            toast({
+                variant: 'destructive',
+                title: 'Login Failed',
+                description: signInError.message || 'An unexpected error occurred.',
+            });
+            setIsLoading(false);
+        }
     }
   };
 
