@@ -27,9 +27,14 @@ export default function DashboardPage() {
     try {
       const batch = writeBatch(firestore);
       initialCases.forEach((caseItem) => {
-        // Use the original case ID for the document ID
         const caseRef = doc(firestore, 'cases', caseItem.id);
         const { uniqueId, ...caseData } = caseItem;
+
+        // Firestore does not accept 'undefined'. Convert to 'null'.
+        if (caseData.assignee === undefined) {
+          caseData.assignee = null;
+        }
+        
         batch.set(caseRef, caseData);
       });
       await batch.commit();
