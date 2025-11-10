@@ -32,7 +32,7 @@ export function CaseColumn({ title, cases, agents, onAssignCase, onRestoreCase, 
         <div className="flex flex-col">
           {cases.map((caseItem) => (
             <CaseCard 
-              key={caseItem.uniqueId} 
+              key={caseItem.id} 
               caseItem={caseItem} 
               agents={agents} 
               onAssignCase={onAssignCase}
