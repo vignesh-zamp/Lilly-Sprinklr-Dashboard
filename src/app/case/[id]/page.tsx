@@ -10,8 +10,8 @@ import { PropertiesView } from "@/components/case-view/properties-view";
 import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function CasePage({ params: paramsPromise }: { params: { id: string } }) {
-  const params = use(Promise.resolve(paramsPromise));
+export default function CasePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise);
   const { id } = params;
   const [caseData, setCaseData] = useState<Case | null>(null);
   const [isLoading, setIsLoading] = useState(true);
