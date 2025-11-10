@@ -18,6 +18,7 @@ type PropertiesViewProps = {
   assignee?: Case['assignee'];
   agents: Agent[];
   onPropertyChange: (property: keyof CaseProperties | 'assignee', value: any) => void;
+  onPropertyRemove: (property: keyof CaseProperties, value: any) => void;
 };
 
 const PropertyPill = ({ children, onRemove }: { children: React.ReactNode; onRemove?: () => void }) => (
@@ -180,18 +181,14 @@ const PropertiesListSection = ({ properties }: { properties: CaseProperties }) =
 );
 
 
-export function PropertiesView({ properties, assignee, agents, onPropertyChange }: PropertiesViewProps) {
+export function PropertiesView({ properties, assignee, agents, onPropertyChange, onPropertyRemove }: PropertiesViewProps) {
   
     const handleMultiSelect = (prop: keyof Case['properties'], value: string) => {
-        const currentValues = (properties[prop] as string[]) || [];
-        if (!currentValues.includes(value)) {
-            onPropertyChange(prop, [...currentValues, value]);
-        }
+        onPropertyChange(prop, value);
     };
 
     const handleRemove = (prop: keyof Case['properties'], value: string) => {
-        const currentValues = (properties[prop] as string[]) || [];
-        onPropertyChange(prop, currentValues.filter(v => v !== value));
+        onPropertyRemove(prop, value);
     };
 
 

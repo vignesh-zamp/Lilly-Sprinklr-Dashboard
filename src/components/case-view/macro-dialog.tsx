@@ -22,22 +22,19 @@ const MacroButton = ({ children, onClick }: { children: React.ReactNode, onClick
 type ApplyClosedMacroDialogProps = {
     caseData: Case;
     onPropertyChange: (property: keyof CaseProperties, value: any) => void;
+    onPropertyRemove: (property: keyof CaseProperties, value: any) => void;
     onClose: () => void;
     onApply: () => void;
 };
 
-function ApplyClosedMacroDialog({ caseData, onPropertyChange, onClose, onApply }: ApplyClosedMacroDialogProps) {
+function ApplyClosedMacroDialog({ caseData, onPropertyChange, onPropertyRemove, onClose, onApply }: ApplyClosedMacroDialogProps) {
     
     const handleMultiSelect = (prop: keyof Case['properties'], value: string) => {
-        const currentValues = (caseData.properties[prop] as string[]) || [];
-        if (!currentValues.includes(value)) {
-            onPropertyChange(prop, [...currentValues, value]);
-        }
+        onPropertyChange(prop, value);
     };
 
     const handleRemove = (prop: keyof Case['properties'], value: string) => {
-        const currentValues = (caseData.properties[prop] as string[]) || [];
-        onPropertyChange(prop, currentValues.filter(v => v !== value));
+        onPropertyRemove(prop, value);
     };
 
     return (
@@ -119,12 +116,13 @@ function ApplyClosedMacroDialog({ caseData, onPropertyChange, onClose, onApply }
 type MacroDialogProps = {
     caseData: Case;
     agents: Agent[];
-    onPropertyChange: (property: 'assignee', value: any) => void;
+    onPropertyChange: (property: 'assignee' | keyof CaseProperties, value: any) => void;
+    onPropertyRemove: (property: keyof CaseProperties, value: any) => void;
     onStatusChange: (status: CaseStatus) => void;
 };
 
 
-export function MacroDialog({ caseData, agents, onPropertyChange, onStatusChange }: MacroDialogProps) {
+export function MacroDialog({ caseData, agents, onPropertyChange, onPropertyRemove, onStatusChange }: MacroDialogProps) {
     const [mainOpen, setMainOpen] = useState(false);
     const [showAssign, setShowAssign] = useState(false);
     const [showApplyClosed, setShowApplyClosed] = useState(false);
@@ -177,7 +175,8 @@ export function MacroDialog({ caseData, agents, onPropertyChange, onStatusChange
                  {showApplyClosed && (
                     <ApplyClosedMacroDialog
                         caseData={caseData}
-                        onPropertyChange={onPropertyChange as any}
+                        onPropertyChange={onPropertyChange}
+                        onPropertyRemove={onPropertyRemove}
                         onClose={() => setShowApplyClosed(false)}
                         onApply={handleApplyAndClose}
                     />

@@ -23,7 +23,7 @@ export const agents: Agent[] = [
   { id: '18', name: 'Jane Smith', email: 'jane.smith@example.com', avatarUrl: 'https://picsum.photos/seed/jane/40/40' },
 ];
 
-const getAgent = (name: string): Agent | undefined => {
+export const getAgent = (name: string): Agent | undefined => {
     if (name.includes('Not specified')) return undefined;
     const agentName = name.split('\n')[0].trim();
     return agents.find(a => a.name === agentName);
@@ -39,7 +39,7 @@ const parseReporter = (reporter: string) => {
 
 const casePropertiesMap: { [key: string]: Partial<Case['properties']> } = {
     '49': { priority: 'medium', country: 'FRANCE', associated_messages: 1, customStatus: 'assigned', region: 'FRANCE' },
-    '56': { priority: 'very high', country: 'FRANCE', associated_messages: 1, customStatus: 'new', region: 'FRANCE' },
+    '56': { priority: 'very high', country: 'FRANCE', associated_messages: 1, customStatus: 'new', region: 'FRANCE', topicGeneral: ["Side Effects", "Patient Access"] },
     '57': { priority: 'medium', country: 'FRANCE', associated_messages: 2, customStatus: 'assigned', region: 'FRANCE' },
     '127001': { priority: 'high', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
     '127002': { priority: 'very high', country: 'US', associated_messages: 1, customStatus: 'new', region: 'US', audience: ["Health Care Provider"] },
@@ -53,10 +53,10 @@ const casePropertiesMap: { [key: string]: Partial<Case['properties']> } = {
     '127010': { priority: 'high', country: 'US', associated_messages: 5, customStatus: 'in progress', region: 'US', audience: ["Business Partner/Provider"] },
     '127011': { priority: 'very high', country: 'UK', associated_messages: 2, customStatus: 'assigned', region: 'UK', lilly_products: ["Cyramza"] },
     '127012': { priority: 'low', country: 'CA', associated_messages: 1, customStatus: 'closed', region: 'CA', topicGeneral: ["Testimonial"] },
-    '127013': { priority: 'very high', country: 'US', associated_messages: 3, customStatus: 'assigned', region: 'US' },
+    '127013': { priority: 'very high', country: 'US', associated_messages: 3, customStatus: 'assigned', region: 'US', lilly_products: ["Humalog"], compliance: ["PC", "Broken Seal"] },
     '127014': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
     '127015': { priority: 'medium', country: 'US', associated_messages: 2, customStatus: 'assigned', region: 'US' },
-    '127016': { priority: 'medium', country: 'US', associated_messages: 6, customStatus: 'closed', region: 'US' },
+    '127016': { priority: 'medium', country: 'US', associated_messages: 6, customStatus: 'closed', region: 'US', topicGeneral: ["Pricing"] },
     '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed', region: 'CA', lilly_products: ["Retevmo"] },
 };
 
@@ -68,7 +68,7 @@ const getComplianceTag = (reportType: string): string[] => {
 };
 
 
-const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
+export const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
     const { name, handle } = parseReporter(rawCase.reporter_information);
     const assignedAgent = getAgent(rawCase.lilly_agent_assigned);
     const extraProps = casePropertiesMap[rawCase.case_id] || {};

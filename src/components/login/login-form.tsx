@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -7,35 +8,41 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuth, initiateEmailSignIn } from '@/firebase';
+import { AuthError } from 'firebase/auth';
 
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
   const [email, setEmail] = useState('sherina@example.com');
   const [password, setPassword] = useState('demo123');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (email === 'sherina@example.com' && password === 'demo123') {
+    try {
+      if (auth) {
+        await initiateEmailSignIn(auth, email, password);
+        // The onAuthStateChanged listener in FirebaseProvider will handle the redirect
         toast({
           title: 'Login Successful',
           description: 'Redirecting to dashboard...',
         });
-        router.push('/dashboard');
       } else {
-        toast({
-          variant: 'destructive',
-          title: 'Login Failed',
-          description: 'Invalid email or password.',
-        });
-        setIsLoading(false);
+        throw new Error("Auth service not available");
       }
-    }, 1000);
+    } catch (error) {
+      const authError = error as AuthError;
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: authError.message || 'Invalid email or password.',
+      });
+      setIsLoading(false);
+    }
   };
 
   return (

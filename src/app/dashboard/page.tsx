@@ -3,121 +3,109 @@
 
 import { useState, useEffect } from 'react';
 import { CaseColumn } from '@/components/dashboard/case-column';
-import { initialCases, agents } from '@/lib/mock-data';
+import { agents } from '@/lib/mock-data';
 import type { Case, CaseStatus, Agent } from '@/lib/types';
 import { caseStatuses } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useCollection, useFirestore, useUser } from '@/firebase';
+import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const [cases, setCases] = useState<Case[]>(initialCases);
   const { toast } = useToast();
+  const { user } = useUser();
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    const closedCaseId = sessionStorage.getItem('closedCaseId');
-    if (closedCaseId) {
-      setCases(currentCases => {
-        // Find the case that was closed
-        const closedCase = currentCases.find(c => c.id === closedCaseId);
-        if (!closedCase) {
-          sessionStorage.removeItem('closedCaseId');
-          return currentCases;
-        }
+  const { data: cases, isLoading } = useCollection<Case>(
+    user ? collection(firestore, 'cases') : null
+  );
 
-        // Remove all instances of this case from the list
-        const filteredCases = currentCases.filter(c => c.id !== closedCaseId);
-
-        // Check if the case is already in the 'All closed' column to avoid duplicates
-        const alreadyInClosed = currentCases.some(c => c.id === closedCaseId && c.status === 'All closed');
-
-        if (!alreadyInClosed) {
-          // Add a new entry for the case in the 'All closed' column
-          filteredCases.push({
-            ...closedCase,
-            status: 'All closed',
-            uniqueId: `${closedCaseId}-All closed-${Date.now()}` // Ensure unique ID
-          });
-        }
-        
-        return filteredCases;
-      });
+  const handleAssignCase = async (caseId: string, agent: Agent) => {
+    if (!firestore || !user) return;
+  
+    const caseRef = doc(firestore, 'cases', caseId);
+    
+    try {
+      const batch = writeBatch(firestore);
       
-      // Clean up the session storage
-      sessionStorage.removeItem('closedCaseId');
-    }
-  }, []);
-
-  const handleAssignCase = (caseId: string, agent: Agent) => {
-    setCases((currentCases) => {
-      // First, update the assignee on all existing instances of the case
-      let updatedCases = currentCases.map((c) => {
-        if (c.id === caseId) {
-          return { ...c, assignee: agent };
-        }
-        return c;
-      });
-
+      // Update the main case document
+      batch.update(caseRef, { 'assignee.id': agent.id, 'assignee.name': agent.name, 'assignee.email': agent.email, 'assignee.avatarUrl': agent.avatarUrl });
+  
+      // If assigned to Pace, update status
       if (agent.email === 'pace@zamp.ai') {
-        const originalCase = currentCases.find(c => c.id === caseId);
-        if (originalCase) {
-          // Check if it's already in the "Assigned to Pace" column to avoid duplicates
-          const alreadyInPaceColumn = updatedCases.some(c => c.id === caseId && c.status === 'Assigned to Pace');
-          
-          if (!alreadyInPaceColumn) {
-            updatedCases.push({
-              ...originalCase,
-              assignee: agent,
-              status: 'Assigned to Pace',
-              uniqueId: `${caseId}-Assigned to Pace-${Date.now()}` // Ensure a unique ID
-            });
-          }
-        }
+        batch.update(caseRef, { status: 'Assigned to Pace' });
       } else {
-        // If assigned to someone other than Pace, remove it from the "Assigned to Pace" column
-        updatedCases = updatedCases.filter(c => !(c.id === caseId && c.status === 'Assigned to Pace'));
+        // If it was assigned to pace, move it back to 'All Assigned'
+        const currentCase = cases?.find(c => c.id === caseId);
+        if (currentCase?.status === 'Assigned to Pace') {
+            batch.update(caseRef, { status: 'All Assigned' });
+        }
       }
       
-      return updatedCases;
-    });
-
-    toast({
-      title: 'Case Assigned',
-      description: `Case #${caseId} has been assigned to ${agent.name}.`,
-    });
+      await batch.commit();
+  
+      toast({
+        title: 'Case Assigned',
+        description: `Case #${caseId} has been assigned to ${agent.name}.`,
+      });
+    } catch (error) {
+      console.error("Error assigning case: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not assign case.',
+      });
+    }
   };
 
-  const handleRestoreCase = (caseId: string) => {
-    setCases((currentCases) => {
-        const caseToRestore = currentCases.find(c => c.id === caseId && c.status === 'All closed');
-        if (!caseToRestore) return currentCases;
-
-        // Remove the 'All closed' instance of the case
-        const withoutClosed = currentCases.filter(c => c.uniqueId !== caseToRestore.uniqueId);
-        
-        // Add it back to 'All Assigned'
-        withoutClosed.push({
-            ...caseToRestore,
-            status: 'All Assigned',
-            uniqueId: `${caseId}-All Assigned-${Date.now()}`
+  const handleRestoreCase = async (caseId: string) => {
+    if (!firestore) return;
+    const caseRef = doc(firestore, 'cases', caseId);
+    try {
+        await updateDoc(caseRef, {
+            status: 'All Assigned'
         });
-
-        return withoutClosed;
-    });
-
-    toast({
-        title: "Case Restored",
-        description: `Case #${caseId} has been restored to "All Assigned".`
-    });
+        toast({
+            title: "Case Restored",
+            description: `Case #${caseId} has been restored to "All Assigned".`
+        });
+    } catch (error) {
+        console.error("Error restoring case: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not restore case.',
+        });
+    }
   };
+
+
+  if (isLoading) {
+    return (
+        <div className="flex w-full h-[calc(100vh-4rem)]">
+            {caseStatuses.map((status) => (
+                <div key={status} className="flex flex-col h-full bg-muted/50 rounded-none w-[380px] border-r border-y">
+                    <div className="p-3 border-b flex items-center gap-3 bg-card shrink-0">
+                        <p className="font-semibold text-sm">{status}</p>
+                    </div>
+                    <div className="p-3 space-y-3">
+                        <div className="h-40 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-40 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+  }
 
   return (
     <ScrollArea className="w-full whitespace-nowrap bg-background">
       <div className="flex w-max h-[calc(100vh-4rem)]">
-        {caseStatuses.map((status, index) => (
+        {(caseStatuses || []).map((status, index) => (
           <CaseColumn
             key={status}
             title={status}
-            cases={cases.filter((c) => c.status === status)}
+            cases={cases?.filter((c) => c.status === status) || []}
             agents={agents}
             onAssignCase={handleAssignCase}
             onRestoreCase={handleRestoreCase}
