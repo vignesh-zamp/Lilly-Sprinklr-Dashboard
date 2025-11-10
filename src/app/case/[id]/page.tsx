@@ -32,8 +32,8 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   const { data: caseData, isLoading, error } = useDoc<Case>(caseRef);
 
   useEffect(() => {
-    if (!isLoading && !caseData && !error && !id.includes('-demo-')) {
-      // Only 404 if it's not a demo case and not found. Demo cases are virtual.
+    if (!isLoading && !caseData && !error) {
+      // We check for error as well to avoid 404 on permission issues
       notFound();
     }
   }, [isLoading, caseData, error, id]);
@@ -59,7 +59,6 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
             });
           })
           .catch((error) => {
-            console.error("Error updating property: ", error);
             const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
             errorEmitter.emit('permission-error', permissionError);
             toast({ variant: "destructive", title: "Error", description: "Could not assign case." });
@@ -77,7 +76,6 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
       
       updateDoc(caseRef, updatePayload)
         .catch((error) => {
-          console.error("Error updating property: ", error);
           const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
           errorEmitter.emit('permission-error', permissionError);
           toast({ variant: "destructive", title: "Error", description: "Could not update case property." });
@@ -96,7 +94,6 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
       const updatePayload = { [`properties.${property}`]: arrayRemove(value) };
       updateDoc(caseRef, updatePayload)
         .catch((error) => {
-          console.error("Error removing property value: ", error);
           const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
           errorEmitter.emit('permission-error', permissionError);
           toast({ variant: "destructive", title: "Error", description: "Could not update case property." });
@@ -128,8 +125,15 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
                 router.push('/dashboard');
             })
             .catch((error) => {
-                console.error("Error closing case with batch: ", error);
-                const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'write', requestResourceData: { status: newStatus } });
+                const permissionError = new FirestorePermissionError({
+                  path: `cases collection (batch operation on case ${originalCaseId})`,
+                  operation: 'write',
+                  requestResourceData: { 
+                    update: { path: caseRef.path, data: { status: newStatus } },
+                    delete_awaiting: { path: awaitingDemoRef.path },
+                    delete_mentions: { path: mentionsDemoRef.path },
+                  }
+                });
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: "destructive", title: "Error", description: "Could not close case." });
             });
@@ -144,7 +148,6 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
                 router.push('/dashboard');
             })
             .catch((error) => {
-                console.error("Error changing status: ", error);
                 const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
                 errorEmitter.emit('permission-error', permissionError);
                 toast({ variant: "destructive", title: "Error", description: "Could not change case status." });
