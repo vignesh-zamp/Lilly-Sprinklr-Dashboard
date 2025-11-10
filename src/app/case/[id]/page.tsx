@@ -11,7 +11,7 @@ import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, arrayRemove, writeBatch } from "firebase/firestore";
 import { errorEmitter } from "@/firebase/error-emitter";
 import { FirestorePermissionError } from "@/firebase/errors";
 
@@ -32,10 +32,11 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   const { data: caseData, isLoading, error } = useDoc<Case>(caseRef);
 
   useEffect(() => {
-    if (!isLoading && !caseData && !error) {
+    if (!isLoading && !caseData && !error && !id.includes('-demo-')) {
+      // Only 404 if it's not a demo case and not found. Demo cases are virtual.
       notFound();
     }
-  }, [isLoading, caseData, error]);
+  }, [isLoading, caseData, error, id]);
 
 
   const handlePropertyChange = async (
@@ -104,22 +105,51 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   };
 
   const handleStatusChange = async (newStatus: CaseStatus) => {
-    if (!caseRef) return;
-    const updatePayload = { status: newStatus };
-    updateDoc(caseRef, updatePayload)
-      .then(() => {
-        toast({
-          title: 'Case Status Changed',
-          description: `Case #${id} has been moved to "${newStatus}".`
-        });
-        router.push('/dashboard');
-      })
-      .catch((error) => {
-        console.error("Error changing status: ", error);
-        const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
-        errorEmitter.emit('permission-error', permissionError);
-        toast({ variant: "destructive", title: "Error", description: "Could not change case status." });
-      });
+    if (!firestore || !caseRef) return;
+
+    if (newStatus === 'All closed') {
+        const batch = writeBatch(firestore);
+
+        // 1. Update original case
+        batch.update(caseRef, { status: newStatus });
+
+        // 2. Delete replicated demo cases
+        const awaitingDemoRef = doc(firestore, 'cases', `${originalCaseId}-demo-awaiting`);
+        batch.delete(awaitingDemoRef);
+        const mentionsDemoRef = doc(firestore, 'cases', `${originalCaseId}-demo-mentions`);
+        batch.delete(mentionsDemoRef);
+
+        batch.commit()
+            .then(() => {
+                toast({
+                    title: 'Case Closed',
+                    description: `Case #${originalCaseId} and its replicas have been closed.`,
+                });
+                router.push('/dashboard');
+            })
+            .catch((error) => {
+                console.error("Error closing case with batch: ", error);
+                const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'write', requestResourceData: { status: newStatus } });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: "destructive", title: "Error", description: "Could not close case." });
+            });
+    } else {
+        const updatePayload = { status: newStatus };
+        updateDoc(caseRef, updatePayload)
+            .then(() => {
+                toast({
+                    title: 'Case Status Changed',
+                    description: `Case #${originalCaseId} has been moved to "${newStatus}".`,
+                });
+                router.push('/dashboard');
+            })
+            .catch((error) => {
+                console.error("Error changing status: ", error);
+                const permissionError = new FirestorePermissionError({ path: caseRef.path, operation: 'update', requestResourceData: updatePayload });
+                errorEmitter.emit('permission-error', permissionError);
+                toast({ variant: "destructive", title: "Error", description: "Could not change case status." });
+            });
+    }
   };
 
   if (isLoading || !caseData) {
