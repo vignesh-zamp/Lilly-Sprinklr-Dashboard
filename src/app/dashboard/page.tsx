@@ -32,7 +32,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <ScrollArea className="w-full h-[calc(100vh-4rem)] whitespace-nowrap">
+    <ScrollArea className="w-full h-[calc(100vh-4rem)] whitespace-nowrap bg-background">
       <div className="flex w-max space-x-4 p-4 h-full">
         {caseStatuses.map((status) => (
           <CaseColumn

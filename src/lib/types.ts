@@ -30,6 +30,7 @@ export type CaseSource = 'Twitter' | 'Facebook' | 'Email' | 'Chat' | 'Unknown' |
 
 export type Case = {
   id: string;
+  uniqueId?: string; // For handling repeated cases in different columns
   title: string;
   preview: string;
   status: CaseStatus;
@@ -44,12 +45,15 @@ export type Case = {
   conversation: Message[];
   properties: {
     status: 'Open' | 'Pending' | 'Resolved' | 'Closed';
-    priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+    priority: 'low' | 'medium' | 'high' | 'very high';
     slaStatus: 'On Track' | 'At Risk' | 'Breached';
     report_type: string;
     lilly_products: string;
     language: 'English' | 'Spanish' | 'French';
     tags: string[];
+    country: string;
+    associated_messages: number;
+    customStatus: 'new' | 'assigned' | 'in progress' | 'closed';
   };
 };
 
@@ -76,7 +80,7 @@ export type RawCase = {
 
 export const propertyOptions = {
   status: ['Open', 'Pending', 'Resolved', 'Closed'],
-  priority: ['Low', 'Medium', 'High', 'Urgent'],
+  priority: ['low', 'medium', 'high', 'very high'],
   slaStatus: ['On Track', 'At Risk', 'Breached'],
   language: ['English', 'Spanish', 'French'],
 };

@@ -7,6 +7,7 @@ import { User, MessageSquare, Flag, MapPin, MoreHorizontal, Edit, Reply, UserPlu
 import { TwitterIcon } from '@/components/icons/twitter-icon';
 import { Facebook, Mail, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { AssignAgentDialog } from './assign-agent-dialog';
 
 type CaseCardProps = {
   caseItem: Case;
@@ -37,8 +38,15 @@ const sourceIcons: Record<CaseSource, React.FC<any>> = {
 export function CaseCard({ caseItem, agents, onAssignCase }: CaseCardProps) {
   const SourceIcon = sourceIcons[caseItem.source as CaseSource] || HelpCircle;
 
+  const priorityColor = {
+    'very high': 'text-red-500',
+    'high': 'text-orange-500',
+    'medium': 'text-yellow-500',
+    'low': 'text-green-500',
+  }[caseItem.properties.priority.toLowerCase()] || 'text-muted-foreground';
+
   return (
-    <Card className="bg-card hover:shadow-md transition-shadow w-[360px] text-sm border-2">
+    <Card className="bg-card w-[360px] text-sm rounded-none border-x-0 border-t-0 border-b">
         <CardHeader className="p-3 flex-row items-start justify-between">
             <Link href={`/case/${caseItem.id}`} className="font-semibold text-primary hover:underline whitespace-nowrap overflow-hidden text-ellipsis mr-2">
                 Case #{caseItem.id}
@@ -50,9 +58,9 @@ export function CaseCard({ caseItem, agents, onAssignCase }: CaseCardProps) {
         </CardHeader>
         <CardContent className="p-3 pt-0">
           <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8 border">
+              <Avatar className="h-8 w-8 border rounded-full">
                  <AvatarImage src={caseItem.user.avatarUrl} alt={caseItem.user.name} />
-                <AvatarFallback>{caseItem.user.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-blue-500 text-white font-bold">{caseItem.user.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                  <p className="font-semibold">{caseItem.user.name}</p>
@@ -60,34 +68,38 @@ export function CaseCard({ caseItem, agents, onAssignCase }: CaseCardProps) {
               </div>
           </div>
           <p className="mt-2 text-foreground/90 whitespace-normal break-words">{caseItem.preview}</p>
+          
+          <Link href={`/case/${caseItem.id}`} className="text-primary text-xs hover:underline mt-2 block">
+            View {caseItem.properties.associated_messages} Associated Message{caseItem.properties.associated_messages > 1 ? 's' : ''}
+          </Link>
 
           <div className="mt-3 space-y-2 text-xs text-muted-foreground">
-            {caseItem.assignee && (
               <div className="flex items-center gap-2">
                 <User className="h-3.5 w-3.5" />
-                <span>{caseItem.assignee.name}</span>
+                <span>{caseItem.assignee ? `${caseItem.assignee.name} (${caseItem.assignee.email})` : 'Unassigned'}</span>
               </div>
-            )}
              <div className="flex items-center gap-2">
                 <MessageSquare className="h-3.5 w-3.5" />
-                <span>Universal Case Inbox</span>
+                <span>{caseItem.assignee ? 'Universal Case Inbox' : 'Unified Routing'}</span>
               </div>
              <div className="flex items-center gap-2">
                 <Flag className="h-3.5 w-3.5" />
-                <Badge variant="secondary" className="text-xs font-normal">{caseItem.properties.report_type}</Badge>
-                <span className="text-orange-400">•</span>
-                <span>{caseItem.properties.priority}</span>
+                <span className="capitalize">{caseItem.properties.customStatus}</span>
+                <span className={`${priorityColor}`}>•</span>
+                <span className="capitalize">{caseItem.properties.priority}</span>
               </div>
                <div className="flex items-center gap-2">
                 <MapPin className="h-3.5 w-3.5" />
-                <span>FRANCE</span>
+                <span>{caseItem.properties.country}</span>
               </div>
           </div>
         </CardContent>
         <CardFooter className="p-3 pt-0 flex items-center justify-between text-muted-foreground">
           <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-7 w-7"><Edit className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7"><UserPlus className="h-4 w-4" /></Button>
+              <AssignAgentDialog agents={agents} onAssign={(agent) => onAssignCase(caseItem.id, agent)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7"><UserPlus className="h-4 w-4" /></Button>
+              </AssignAgentDialog>
               <Button variant="ghost" size="icon" className="h-7 w-7"><Reply className="h-4 w-4" /></Button>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>

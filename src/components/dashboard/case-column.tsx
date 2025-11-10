@@ -14,7 +14,7 @@ type CaseColumnProps = {
 export function CaseColumn({ title, cases, agents, onAssignCase }: CaseColumnProps) {
   return (
     <div className="flex flex-col h-full bg-muted/50 rounded-lg w-[380px] border">
-      <div className="p-3 border-b flex items-center gap-3">
+      <div className="p-3 border-b flex items-center gap-3 bg-card">
         <RadioGroup defaultValue={title} disabled>
           <RadioGroupItem value={title} id={title} />
         </RadioGroup>
@@ -22,8 +22,8 @@ export function CaseColumn({ title, cases, agents, onAssignCase }: CaseColumnPro
           {title} <span className="text-muted-foreground font-normal">({cases.length})</span>
         </Label>
       </div>
-      <ScrollArea className="flex-1 p-2 bg-background">
-        <div className="space-y-2">
+      <ScrollArea className="flex-1 bg-card">
+        <div className="flex flex-col">
           {cases.map((caseItem) => (
             <CaseCard key={caseItem.id} caseItem={caseItem} agents={agents} onAssignCase={onAssignCase} />
           ))}
