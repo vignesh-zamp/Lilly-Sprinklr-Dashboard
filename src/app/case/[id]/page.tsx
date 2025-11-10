@@ -4,7 +4,7 @@
 import { useState, useEffect, use } from "react";
 import { notFound } from "next/navigation";
 import { getCaseById, agents } from "@/lib/mock-data";
-import type { Agent, Case } from "@/lib/types";
+import type { Agent, Case, CaseProperties } from "@/lib/types";
 import { ConversationView } from "@/components/case-view/conversation-view";
 import { PropertiesView } from "@/components/case-view/properties-view";
 import { CaseViewHeader } from "@/components/case-view/case-view-header";
@@ -44,7 +44,7 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   }, [id, isLoading]);
 
   const handlePropertyChange = (
-    property: keyof Case["properties"] | 'assignee',
+    property: keyof CaseProperties | 'assignee',
     value: any
   ) => {
     setCaseData((prev) => {

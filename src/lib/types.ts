@@ -28,6 +28,45 @@ export type CaseStatus = (typeof caseStatuses)[number];
 
 export type CaseSource = 'Twitter' | 'Facebook' | 'Email' | 'Chat' | 'Unknown' | 'Instagram' | 'TikTok';
 
+export type CaseProperties = {
+  status: 'Open' | 'Pending' | 'Resolved' | 'Closed';
+  priority: 'low' | 'medium' | 'high' | 'very high';
+  slaStatus: 'On Track' | 'At Risk' | 'Breached';
+  report_type: string;
+  lilly_products: string | string[];
+  language: 'English' | 'Spanish' | 'French';
+  tags: string[];
+  country: string;
+  associated_messages: number;
+  customStatus: 'new' | 'assigned' | 'in progress' | 'closed';
+  corporate?: string[];
+  audience?: string[];
+  compliance?: string[];
+  therapeuticArea?: string[];
+  topicGeneral?: string[];
+  brand?: string[];
+  lillyHealthApp?: string[];
+  // New properties from image
+  channel: string;
+  region: string;
+  issueType: string;
+  themeMatches: string;
+  topicMatches: string;
+  topicGroupMatches: string;
+  sourcedFromListening: string;
+  sourcedFromCTM: string;
+  ctmAdId: string;
+  initialMessagePrivacy: string;
+  hcpType: string;
+  patientGender: string;
+  patientAge: string;
+  contactedPoster: string;
+  posterConsent: string;
+  posterContactInfo: string;
+  lotControlNumber: string;
+};
+
+
 export type Case = {
   id: string;
   uniqueId?: string; // For handling repeated cases in different columns
@@ -43,25 +82,7 @@ export type Case = {
     avatarUrl: string;
   };
   conversation: Message[];
-  properties: {
-    status: 'Open' | 'Pending' | 'Resolved' | 'Closed';
-    priority: 'low' | 'medium' | 'high' | 'very high';
-    slaStatus: 'On Track' | 'At Risk' | 'Breached';
-    report_type: string;
-    lilly_products: string | string[];
-    language: 'English' | 'Spanish' | 'French';
-    tags: string[];
-    country: string;
-    associated_messages: number;
-    customStatus: 'new' | 'assigned' | 'in progress' | 'closed';
-    corporate?: string[];
-    audience?: string[];
-    compliance?: string[];
-    therapeuticArea?: string[];
-    topicGeneral?: string[];
-    brand?: string[];
-    lillyHealthApp?: string[];
-  };
+  properties: CaseProperties;
 };
 
 export type RawCase = {

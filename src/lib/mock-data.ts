@@ -38,26 +38,26 @@ const parseReporter = (reporter: string) => {
 };
 
 const casePropertiesMap: { [key: string]: Partial<Case['properties']> } = {
-    '49': { priority: 'medium', country: 'FRANCE', associated_messages: 1, customStatus: 'assigned'},
-    '56': { priority: 'very high', country: 'FRANCE', associated_messages: 1, customStatus: 'new'},
-    '57': { priority: 'medium', country: 'FRANCE', associated_messages: 2, customStatus: 'assigned'},
-    '127001': { priority: 'high', country: 'US', associated_messages: 1, customStatus: 'assigned' },
-    '127002': { priority: 'very high', country: 'US', associated_messages: 1, customStatus: 'new' },
-    '127003': { priority: 'medium', country: 'UK', associated_messages: 2, customStatus: 'in progress' },
-    '127004': { priority: 'very high', country: 'CA', associated_messages: 1, customStatus: 'assigned' },
-    '127005': { priority: 'medium', country: 'FR', associated_messages: 3, customStatus: 'assigned' },
-    '127006': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned' },
-    '127007': { priority: 'medium', country: 'CA', associated_messages: 4, customStatus: 'closed' },
-    '127008': { priority: 'high', country: 'US', associated_messages: 2, customStatus: 'assigned' },
-    '127009': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned' },
-    '127010': { priority: 'high', country: 'US', associated_messages: 5, customStatus: 'in progress' },
-    '127011': { priority: 'very high', country: 'UK', associated_messages: 2, customStatus: 'assigned' },
-    '127012': { priority: 'low', country: 'CA', associated_messages: 1, customStatus: 'closed' },
-    '127013': { priority: 'very high', country: 'US', associated_messages: 3, customStatus: 'assigned' },
-    '127014': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned' },
-    '127015': { priority: 'medium', country: 'US', associated_messages: 2, customStatus: 'assigned' },
-    '127016': { priority: 'medium', country: 'US', associated_messages: 6, customStatus: 'closed' },
-    '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed' },
+    '49': { priority: 'medium', country: 'FRANCE', associated_messages: 1, customStatus: 'assigned', region: 'FRANCE' },
+    '56': { priority: 'very high', country: 'FRANCE', associated_messages: 1, customStatus: 'new', region: 'FRANCE' },
+    '57': { priority: 'medium', country: 'FRANCE', associated_messages: 2, customStatus: 'assigned', region: 'FRANCE' },
+    '127001': { priority: 'high', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
+    '127002': { priority: 'very high', country: 'US', associated_messages: 1, customStatus: 'new', region: 'US' },
+    '127003': { priority: 'medium', country: 'UK', associated_messages: 2, customStatus: 'in progress', region: 'UK' },
+    '127004': { priority: 'very high', country: 'CA', associated_messages: 1, customStatus: 'assigned', region: 'CA' },
+    '127005': { priority: 'medium', country: 'FR', associated_messages: 3, customStatus: 'assigned', region: 'FR' },
+    '127006': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
+    '127007': { priority: 'medium', country: 'CA', associated_messages: 4, customStatus: 'closed', region: 'CA' },
+    '127008': { priority: 'high', country: 'US', associated_messages: 2, customStatus: 'assigned', region: 'US' },
+    '127009': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
+    '127010': { priority: 'high', country: 'US', associated_messages: 5, customStatus: 'in progress', region: 'US' },
+    '127011': { priority: 'very high', country: 'UK', associated_messages: 2, customStatus: 'assigned', region: 'UK' },
+    '127012': { priority: 'low', country: 'CA', associated_messages: 1, customStatus: 'closed', region: 'CA' },
+    '127013': { priority: 'very high', country: 'US', associated_messages: 3, customStatus: 'assigned', region: 'US' },
+    '127014': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
+    '127015': { priority: 'medium', country: 'US', associated_messages: 2, customStatus: 'assigned', region: 'US' },
+    '127016': { priority: 'medium', country: 'US', associated_messages: 6, customStatus: 'closed', region: 'US' },
+    '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed', region: 'CA' },
 };
 
 
@@ -84,7 +84,7 @@ const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
         ],
         properties: {
             status: 'Open',
-            priority: 'Medium',
+            priority: 'medium',
             slaStatus: 'On Track',
             report_type: rawCase.report_type,
             lilly_products: rawCase.lilly_products,
@@ -93,6 +93,24 @@ const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
             country: 'Unknown',
             associated_messages: 1,
             customStatus: 'assigned',
+            // From image
+            channel: rawCase.channel,
+            region: 'FRANCE',
+            issueType: 'Click to Add',
+            themeMatches: 'Click to Add',
+            topicMatches: 'Click to Add',
+            topicGroupMatches: 'Click to Add',
+            sourcedFromListening: 'No',
+            sourcedFromCTM: 'No',
+            ctmAdId: 'Click to Add',
+            initialMessagePrivacy: 'Click to Add',
+            hcpType: rawCase.hcp_type,
+            patientGender: rawCase.patient_gender,
+            patientAge: rawCase.patient_age,
+            contactedPoster: rawCase.contacted_poster,
+            posterConsent: rawCase.poster_consent,
+            posterContactInfo: rawCase.poster_contact_info,
+            lotControlNumber: `#${rawCase.lot_control_number} (Unknown)`,
             ...extraProps
         },
     };
@@ -113,8 +131,7 @@ const addCasesToFinal = (ids: string[], status: Case['status']) => {
     ids.forEach(id => {
         const caseToAdd = getCase(id);
         if (caseToAdd) {
-            // Because of repetitions, we create a unique key for each instance
-            const uniqueId = `${id}-${status}`;
+            const uniqueId = `${id}-${status}-${Math.random()}`; // Ensure unique
             if (!caseSet.has(uniqueId)) {
                 finalCases.push({ ...caseToAdd, status, uniqueId: uniqueId });
                 caseSet.add(uniqueId);
@@ -123,20 +140,16 @@ const addCasesToFinal = (ids: string[], status: Case['status']) => {
     });
 };
 
-// Add cases for each column based on the provided IDs
 addCasesToFinal(column2_ids, 'All Demo - Awaiting');
 addCasesToFinal(column3_ids, 'Demo - Mentions');
 addCasesToFinal(column4_ids, 'All Assigned');
 addCasesToFinal(column6_ids, 'All closed');
 
 
-// Add any remaining cases from allCases to 'All Assigned' if they aren't already represented
 allCases.forEach(c => {
-    // A bit of a simplification: we check if the original case ID is in any of the columns.
-    // This avoids adding a case to "All Assigned" if it's already been placed elsewhere.
-    const isPlaced = column2_ids.includes(c.id) || column3_ids.includes(c.id) || column4_ids.includes(c.id) || column6_ids.includes(c.id);
-    if (!isPlaced) {
-         const uniqueId = `${c.id}-All Assigned`;
+    const isPlacedInMainColumns = column2_ids.includes(c.id) || column3_ids.includes(c.id) || column4_ids.includes(c.id) || column6_ids.includes(c.id);
+    if (!isPlacedInMainColumns) {
+         const uniqueId = `${c.id}-All Assigned-${Math.random()}`;
          if (!caseSet.has(uniqueId)) {
             finalCases.push({ ...c, status: 'All Assigned', uniqueId });
             caseSet.add(uniqueId);

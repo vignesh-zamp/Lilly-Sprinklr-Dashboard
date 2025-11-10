@@ -1,19 +1,22 @@
-import type { Agent, Case } from '@/lib/types';
+import type { Agent, Case, CaseProperties } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Button } from '../ui/button';
-import { X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown, Info } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { propertyOptions } from '@/lib/types';
 import { useState } from 'react';
+import { TwitterIcon } from '../icons/twitter-icon';
+import { Facebook, Mail, MessageSquare, HelpCircle } from 'lucide-react';
+import type { CaseSource } from '@/lib/types';
 
 type PropertiesViewProps = {
-  properties: Case['properties'];
+  properties: CaseProperties;
   assignee?: Case['assignee'];
   agents: Agent[];
-  onPropertyChange: (property: keyof Case['properties'] | 'assignee', value: any) => void;
+  onPropertyChange: (property: keyof CaseProperties | 'assignee', value: any) => void;
 };
 
 const PropertyPill = ({ children, onRemove }: { children: React.ReactNode; onRemove?: () => void }) => (
@@ -102,6 +105,71 @@ const PropertySection = ({ title, children, defaultOpen = false }: { title: stri
     </Accordion>
 );
 
+const PropertyRow = ({ label, value, hasInfo = false, isClickable=false }: { label: string; value: string; hasInfo?: boolean, isClickable?: boolean }) => (
+    <div className="flex justify-between items-center text-sm py-2 border-b">
+        <div className="flex items-center">
+            <span className="text-muted-foreground">{label}</span>
+            {hasInfo && <Info className="h-3 w-3 ml-1 text-muted-foreground" />}
+        </div>
+        <span className={`font-medium ${isClickable ? 'text-primary' : 'text-foreground'}`}>{value}</span>
+    </div>
+);
+
+const sourceIcons: Record<CaseSource, React.FC<any>> = {
+  Twitter: (props) => <TwitterIcon {...props} />,
+  Facebook: Facebook,
+  Email: Mail,
+  Chat: MessageSquare,
+  Instagram: (props) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+    </svg>
+  ),
+  TikTok: (props) => (
+     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.04-5.36.01-4.03-.01-8.05.02-12.07z" />
+    </svg>
+  ),
+  Unknown: HelpCircle
+};
+
+const ChannelSection = ({ source }: { source: string }) => {
+    const SourceIcon = sourceIcons[source as CaseSource] || HelpCircle;
+    return (
+        <PropertySection title="Channel" defaultOpen>
+            <div className="flex items-center gap-2 text-sm">
+                <SourceIcon className="h-5 w-5 text-muted-foreground" />
+                <span className="font-medium">{source}</span>
+            </div>
+        </PropertySection>
+    );
+};
+
+
+const PropertiesListSection = ({ properties }: { properties: CaseProperties }) => (
+    <PropertySection title="Properties" defaultOpen>
+        <PropertyRow label="Region" value={properties.region} hasInfo />
+        <PropertyRow label="Country (CF)" value={properties.country} hasInfo />
+        <PropertyRow label="Issue Type" value={properties.issueType} isClickable hasInfo />
+        <PropertyRow label="Theme Matches" value={properties.themeMatches} isClickable />
+        <PropertyRow label="Topic Matches" value={properties.topicMatches} isClickable />
+        <PropertyRow label="Topic Group Matches" value={properties.topicGroupMatches} isClickable />
+        <PropertyRow label="Sourced From Listening" value={properties.sourcedFromListening} hasInfo />
+        <PropertyRow label="Sourced From CTM" value={properties.sourcedFromCTM} />
+        <PropertyRow label="CTM Ad ID" value={properties.ctmAdId} isClickable />
+        <PropertyRow label="Initial Messsage Privacy" value={properties.initialMessagePrivacy} isClickable />
+        <PropertyRow label="HCP Type" value={properties.hcpType} />
+        <PropertyRow label="Patient Gender" value={properties.patientGender} />
+        <PropertyRow label="Patient Age" value={properties.patientAge} />
+        <PropertyRow label="Contacted Poster" value={properties.contactedPoster} />
+        <PropertyRow label="Poster Consent" value={properties.posterConsent} />
+        <PropertyRow label="Poster Contact Info" value={properties.posterContactInfo} />
+        <PropertyRow label="Lot Control Number" value={properties.lotControlNumber} />
+    </PropertySection>
+);
+
 
 export function PropertiesView({ properties, assignee, agents, onPropertyChange }: PropertiesViewProps) {
   
@@ -139,6 +207,19 @@ export function PropertiesView({ properties, assignee, agents, onPropertyChange 
                     <p className="text-xs text-muted-foreground">Predicted</p>
                 </div>
             </div>
+
+            <Card>
+                <CardContent className="p-3 space-y-4 text-sm">
+                    <ChannelSection source={properties.channel} />
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardContent className="p-3 space-y-4 text-sm">
+                    <PropertiesListSection properties={properties} />
+                </CardContent>
+            </Card>
+
 
             <Card>
                 <CardContent className="p-3 space-y-4 text-sm">
