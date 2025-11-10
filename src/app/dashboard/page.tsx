@@ -9,9 +9,11 @@ import { caseStatuses } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, updateDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { initialCases } from '@/lib/mock-data';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -88,25 +90,44 @@ export default function DashboardPage() {
   };
 
   const handleMoveCase = async (caseId: string) => {
-    if (!firestore) return;
-    const caseRef = doc(firestore, 'cases', caseId);
-    const updatePayload = { status: 'All Demo - Awaiting' };
+    if (!firestore || !cases) return;
+    const originalCase = cases.find(c => c.id === caseId);
+    if (!originalCase) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Original case not found.' });
+        return;
+    }
 
-    updateDoc(caseRef, updatePayload)
-        .catch((error) => {
-            console.error("Error moving case: ", error);
-            const permissionError = new FirestorePermissionError({
-              path: caseRef.path,
-              operation: 'update',
-              requestResourceData: updatePayload
-            });
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not move case.',
-            });
+    try {
+        const batch = writeBatch(firestore);
+
+        // Replicate for "All Demo - Awaiting"
+        const awaitingDemoRef = doc(firestore, 'cases', `${originalCase.id}-demo-awaiting`);
+        batch.set(awaitingDemoRef, { ...originalCase, status: 'All Demo - Awaiting' });
+
+        // Replicate for "Demo - Mentions"
+        const mentionsDemoRef = doc(firestore, 'cases', `${originalCase.id}-demo-mentions`);
+        batch.set(mentionsDemoRef, { ...originalCase, status: 'Demo - Mentions' });
+
+        await batch.commit();
+
+        toast({
+            title: 'Case Replicated',
+            description: `Case #${originalCase.id} has been added to demo columns.`,
         });
+    } catch (error) {
+        console.error("Error replicating case: ", error);
+        const permissionError = new FirestorePermissionError({
+          path: 'cases', // This is a batch, so path is generic
+          operation: 'write',
+          requestResourceData: { info: 'Batch operation to replicate case' }
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not replicate case.',
+        });
+    }
   };
 
 
@@ -130,7 +151,7 @@ export default function DashboardPage() {
 
   return (
     <>
-    {cases && cases.length > 0 && (
+    {cases && (
       <ScrollArea className="w-full whitespace-nowrap bg-background">
         <div className="flex w-max h-[calc(100vh-4rem)]">
           {(caseStatuses || []).map((status, index) => (
