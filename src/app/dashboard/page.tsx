@@ -17,9 +17,8 @@ export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const { data: cases, isLoading } = useCollection<Case>(
-    user ? collection(firestore, 'cases') : null
-  );
+  const casesCollectionRef = user && firestore ? collection(firestore, 'cases') : null;
+  const { data: cases, isLoading } = useCollection<Case>(casesCollectionRef);
 
   const handleSeedDatabase = async () => {
     if (!firestore) return;
