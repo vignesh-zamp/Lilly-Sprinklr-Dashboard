@@ -3,6 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CaseCard } from './case-card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 type CaseColumnProps = {
   title: string;
@@ -10,11 +11,15 @@ type CaseColumnProps = {
   agents: Agent[];
   onAssignCase: (caseId: string, agent: Agent) => void;
   onRestoreCase: (caseId: string) => void;
+  isFirst?: boolean;
 };
 
-export function CaseColumn({ title, cases, agents, onAssignCase, onRestoreCase }: CaseColumnProps) {
+export function CaseColumn({ title, cases, agents, onAssignCase, onRestoreCase, isFirst = false }: CaseColumnProps) {
   return (
-    <div className="flex flex-col h-full bg-muted/50 rounded-none w-[380px] border">
+    <div className={cn(
+        "flex flex-col h-full bg-muted/50 rounded-none w-[380px] border-r border-y",
+        isFirst && "border-l"
+      )}>
       <div className="p-3 border-b flex items-center gap-3 bg-card shrink-0">
         <RadioGroup defaultValue={title} disabled>
           <RadioGroupItem value={title} id={title} />

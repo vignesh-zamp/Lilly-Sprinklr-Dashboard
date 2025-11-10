@@ -48,13 +48,10 @@ export default function DashboardPage() {
   }, []);
 
   const handleAssignCase = (caseId: string, agent: Agent) => {
-    let wasCaseAssigned = false;
     setCases((currentCases) => {
-      let caseExists = false;
       // First, update the assignee on all existing instances of the case
       let updatedCases = currentCases.map((c) => {
         if (c.id === caseId) {
-          caseExists = true;
           return { ...c, assignee: agent };
         }
         return c;
@@ -80,16 +77,13 @@ export default function DashboardPage() {
         updatedCases = updatedCases.filter(c => !(c.id === caseId && c.status === 'Assigned to Pace'));
       }
       
-      wasCaseAssigned = caseExists;
       return updatedCases;
     });
 
-    if (wasCaseAssigned) {
-        toast({
-          title: 'Case Assigned',
-          description: `Case #${caseId} has been assigned to ${agent.name}.`,
-        });
-    }
+    toast({
+      title: 'Case Assigned',
+      description: `Case #${caseId} has been assigned to ${agent.name}.`,
+    });
   };
 
   const handleRestoreCase = (caseId: string) => {
@@ -118,8 +112,8 @@ export default function DashboardPage() {
 
   return (
     <ScrollArea className="w-full whitespace-nowrap bg-background">
-      <div className="flex w-max space-x-4 p-4 h-[calc(100vh-4rem)]">
-        {caseStatuses.map((status) => (
+      <div className="flex w-max h-[calc(100vh-4rem)]">
+        {caseStatuses.map((status, index) => (
           <CaseColumn
             key={status}
             title={status}
@@ -127,6 +121,7 @@ export default function DashboardPage() {
             agents={agents}
             onAssignCase={handleAssignCase}
             onRestoreCase={handleRestoreCase}
+            isFirst={index === 0}
           />
         ))}
       </div>
