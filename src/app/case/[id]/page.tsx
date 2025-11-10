@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -56,7 +57,7 @@ export default function CasePage({ params }: { params: { id: string } }) {
                 <Skeleton className="h-24 w-full" />
                 <Skeleton className="h-24 w-full" />
             </div>
-            <div className="p-6 border-l bg-muted/50 space-y-4">
+            <div className="p-6 border-l bg-card space-y-4">
                 <Skeleton className="h-16 w-full" />
                 <Skeleton className="h-32 w-full" />
                 <Skeleton className="h-24 w-full" />
@@ -67,10 +68,13 @@ export default function CasePage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-card">
+    <div className="flex flex-col h-screen bg-muted/30">
       <CaseViewHeader caseData={caseData} />
       <div className="grid md:grid-cols-[2fr_1fr] flex-1 overflow-hidden">
-        <ConversationView conversation={caseData.conversation} />
+        <ConversationView 
+          caseData={caseData}
+          conversation={caseData.conversation} 
+        />
         <PropertiesView
           properties={caseData.properties}
           assignee={caseData.assignee}
