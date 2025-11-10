@@ -1,4 +1,5 @@
-import type { Message, Case } from '@/lib/types';
+
+import type { Message, Case, Agent, CaseStatus } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,8 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { MessageSquare, Twitter } from 'lucide-react';
+import { MacroDialog } from './macro-dialog';
 
-export function ConversationView({ conversation, caseData }: { conversation: Message[], caseData: Case }) {
+type ConversationViewProps = {
+  conversation: Message[];
+  caseData: Case;
+  agents: Agent[];
+  onPropertyChange: (property: 'assignee', value: any) => void;
+  onStatusChange: (status: CaseStatus) => void;
+};
+
+
+export function ConversationView({ conversation, caseData, agents, onPropertyChange, onStatusChange }: ConversationViewProps) {
   return (
     <div className="flex flex-col h-full bg-muted/30">
         <ScrollArea className="flex-1">
@@ -74,7 +85,12 @@ export function ConversationView({ conversation, caseData }: { conversation: Mes
         <div className="p-4 bg-card border-t">
              <Textarea placeholder="Write a response here..." className="mb-2" />
              <div className="flex justify-between items-center">
-                 <Button variant="outline">Macro</Button>
+                 <MacroDialog 
+                    caseData={caseData}
+                    agents={agents}
+                    onPropertyChange={onPropertyChange}
+                    onStatusChange={onStatusChange}
+                 />
                  <Button>Send</Button>
              </div>
         </div>

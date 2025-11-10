@@ -2,17 +2,20 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { notFound } from "next/navigation";
+import { useRouter, notFound } from "next/navigation";
 import { getCaseById, agents } from "@/lib/mock-data";
-import type { Agent, Case, CaseProperties } from "@/lib/types";
+import type { Agent, Case, CaseProperties, CaseStatus } from "@/lib/types";
 import { ConversationView } from "@/components/case-view/conversation-view";
 import { PropertiesView } from "@/components/case-view/properties-view";
 import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CasePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
   const { id } = params;
+  const router = useRouter();
+  const { toast } = useToast();
   const [caseData, setCaseData] = useState<Case | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -51,6 +54,12 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
       if (!prev) return null;
       if (property === 'assignee') {
         const agent = agents.find(a => a.id === value);
+        if (agent) {
+             toast({
+                title: 'Case Assigned',
+                description: `Case #${prev.id} has been assigned to ${agent.name}.`,
+            });
+        }
         return { ...prev, assignee: agent };
       }
       return {
@@ -61,6 +70,19 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
         },
       };
     });
+  };
+
+  const handleStatusChange = (newStatus: CaseStatus) => {
+      setCaseData(prev => {
+          if (!prev) return null;
+          return { ...prev, status: newStatus };
+      });
+      toast({
+          title: 'Case Status Changed',
+          description: `Case #${id} has been moved to "${newStatus}".`
+      });
+      // Optionally, navigate away or update a global state
+      router.push('/dashboard');
   };
 
   if (isLoading || !caseData) {
@@ -92,7 +114,10 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
       <div className="grid md:grid-cols-[2fr_1fr] flex-1 overflow-hidden">
         <ConversationView 
           caseData={caseData}
-          conversation={caseData.conversation} 
+          conversation={caseData.conversation}
+          agents={agents}
+          onPropertyChange={handlePropertyChange}
+          onStatusChange={handleStatusChange}
         />
         <PropertiesView
           properties={caseData.properties}
