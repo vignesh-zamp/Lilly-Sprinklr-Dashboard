@@ -12,8 +12,6 @@ import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebas
 import { collection, doc, updateDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { initialCases } from '@/lib/mock-data';
-import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -52,7 +50,6 @@ export default function DashboardPage() {
     
     updateDoc(caseRef, updatePayload)
       .catch((error) => {
-        console.error("Error assigning case: ", error);
         const permissionError = new FirestorePermissionError({
           path: caseRef.path,
           operation: 'update',
@@ -74,7 +71,6 @@ export default function DashboardPage() {
 
     updateDoc(caseRef, updatePayload)
         .catch((error) => {
-            console.error("Error restoring case: ", error);
             const permissionError = new FirestorePermissionError({
               path: caseRef.path,
               operation: 'update',
