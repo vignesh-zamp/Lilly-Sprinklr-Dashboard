@@ -33,11 +33,12 @@ export default function DashboardPage() {
         const { uniqueId, ...caseData } = caseItem;
 
         // Firestore does not accept 'undefined'. Convert to 'null'.
-        if (caseData.assignee === undefined) {
-          caseData.assignee = null;
+        const casePayload = { ...caseData };
+        if (casePayload.assignee === undefined) {
+          casePayload.assignee = null;
         }
         
-        batch.set(caseRef, caseData);
+        batch.set(caseRef, casePayload);
       });
       await batch.commit();
       toast({
@@ -87,12 +88,6 @@ export default function DashboardPage() {
     }
     
     updateDoc(caseRef, updatePayload)
-      .then(() => {
-        toast({
-          title: 'Case Assigned',
-          description: `Case #${caseId} has been assigned to ${agent.name}.`,
-        });
-      })
       .catch((error) => {
         console.error("Error assigning case: ", error);
         const permissionError = new FirestorePermissionError({
@@ -115,12 +110,6 @@ export default function DashboardPage() {
     const updatePayload = { status: 'All Assigned' };
 
     updateDoc(caseRef, updatePayload)
-        .then(() => {
-            toast({
-                title: "Case Restored",
-                description: `Case #${caseId} has been restored to "All Assigned".`
-            });
-        })
         .catch((error) => {
             console.error("Error restoring case: ", error);
             const permissionError = new FirestorePermissionError({

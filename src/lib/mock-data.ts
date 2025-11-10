@@ -1,3 +1,4 @@
+
 import type { Agent, Case, RawCase } from './types';
 import { formatDistanceToNow } from 'date-fns';
 import rawData from './cases.json';
@@ -68,7 +69,7 @@ const getComplianceTag = (reportType: string): string[] => {
 };
 
 
-export const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
+const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
     const { name, handle } = parseReporter(rawCase.reporter_information);
     const assignedAgent = getAgent(rawCase.lilly_agent_assigned);
     const extraProps = casePropertiesMap[rawCase.case_id] || {};
@@ -145,41 +146,25 @@ const column4_ids = ['49', '56', '57', '127001', '127002', '127003', '127004', '
 const column6_ids = ['127007', '127012', '127016', '127017'];
 
 
-const finalCases: Case[] = [];
-const caseSet = new Set<string>();
-
-const addCasesToFinal = (ids: string[], status: Case['status']) => {
-    ids.forEach(id => {
-        const caseToAdd = getCase(id);
-        if (caseToAdd) {
-            const uniqueId = `${id}-${status}-${Math.random()}`; // Ensure unique
-            if (!caseSet.has(uniqueId)) {
-                finalCases.push({ ...caseToAdd, status, uniqueId: uniqueId });
-                caseSet.add(uniqueId);
-            }
-        }
-    });
-};
-
-addCasesToFinal(column2_ids, 'All Demo - Awaiting');
-addCasesToFinal(column3_ids, 'Demo - Mentions');
-addCasesToFinal(column4_ids, 'All Assigned');
-addCasesToFinal(column6_ids, 'All closed');
-
+const finalCasesMap = new Map<string, Case>();
 
 allCases.forEach(c => {
-    const isPlacedInMainColumns = column2_ids.includes(c.id) || column3_ids.includes(c.id) || column4_ids.includes(c.id) || column6_ids.includes(c.id);
-    if (!isPlacedInMainColumns) {
-         const uniqueId = `${c.id}-All Assigned-${Math.random()}`;
-         if (!caseSet.has(uniqueId)) {
-            finalCases.push({ ...c, status: 'All Assigned', uniqueId });
-            caseSet.add(uniqueId);
-         }
+    let status: Case['status'] = 'All Assigned'; // Default
+    if (column6_ids.includes(c.id)) {
+        status = 'All closed';
+    } else if (column2_ids.includes(c.id)) {
+        status = 'All Demo - Awaiting';
+    } else if (column3_ids.includes(c.id)) {
+        status = 'Demo - Mentions';
+    } else if (column4_ids.includes(c.id)) {
+        status = 'All Assigned';
     }
+    
+    // Add to map, which will overwrite with the last assigned status if duplicated across column lists
+    finalCasesMap.set(c.id, { ...c, status });
 });
 
-
-export const initialCases: Case[] = finalCases;
+export const initialCases: Case[] = Array.from(finalCasesMap.values());
 
 
 export const getCaseById = (id: string): Case | undefined => {
