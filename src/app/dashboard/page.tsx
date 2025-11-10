@@ -50,16 +50,16 @@ export default function DashboardPage() {
   const handleAssignCase = (caseId: string, agent: Agent) => {
     let wasCaseAssigned = false;
     setCases((currentCases) => {
-      let caseAssigned = false;
-      const updatedCases = currentCases.map((c) => {
+      let caseExists = false;
+      // First, update the assignee on all existing instances of the case
+      let updatedCases = currentCases.map((c) => {
         if (c.id === caseId) {
-          // Update the assignee for all instances of this case
+          caseExists = true;
           return { ...c, assignee: agent };
         }
         return c;
       });
 
-      // If assigning to Pace, add a new entry to the "Assigned to Pace" column
       if (agent.email === 'pace@zamp.ai') {
         const originalCase = currentCases.find(c => c.id === caseId);
         if (originalCase) {
@@ -67,26 +67,20 @@ export default function DashboardPage() {
           const alreadyInPaceColumn = updatedCases.some(c => c.id === caseId && c.status === 'Assigned to Pace');
           
           if (!alreadyInPaceColumn) {
-            const newPaceCase: Case = {
+            updatedCases.push({
               ...originalCase,
               assignee: agent,
               status: 'Assigned to Pace',
               uniqueId: `${caseId}-Assigned to Pace-${Date.now()}` // Ensure a unique ID
-            };
-            updatedCases.push(newPaceCase);
-            caseAssigned = true;
+            });
           }
         }
+      } else {
+        // If assigned to someone other than Pace, remove it from the "Assigned to Pace" column
+        updatedCases = updatedCases.filter(c => !(c.id === caseId && c.status === 'Assigned to Pace'));
       }
-
-      if (!caseAssigned) {
-         // This block will run for agents other than Pace, or if the case was already in Pace's column
-         const caseExists = updatedCases.some(c => c.id === caseId);
-         if (caseExists) {
-             caseAssigned = true;
-         }
-      }
-      wasCaseAssigned = caseAssigned;
+      
+      wasCaseAssigned = caseExists;
       return updatedCases;
     });
 
