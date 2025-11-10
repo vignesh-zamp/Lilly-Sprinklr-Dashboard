@@ -11,7 +11,7 @@ import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CasePage({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const [caseData, setCaseData] = useState<Case | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
