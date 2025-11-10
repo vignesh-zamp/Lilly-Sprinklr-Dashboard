@@ -48,12 +48,19 @@ export type Case = {
     priority: 'low' | 'medium' | 'high' | 'very high';
     slaStatus: 'On Track' | 'At Risk' | 'Breached';
     report_type: string;
-    lilly_products: string;
+    lilly_products: string | string[];
     language: 'English' | 'Spanish' | 'French';
     tags: string[];
     country: string;
     associated_messages: number;
     customStatus: 'new' | 'assigned' | 'in progress' | 'closed';
+    corporate?: string[];
+    audience?: string[];
+    compliance?: string[];
+    therapeuticArea?: string[];
+    topicGeneral?: string[];
+    brand?: string[];
+    lillyHealthApp?: string[];
   };
 };
 
@@ -83,4 +90,65 @@ export const propertyOptions = {
   priority: ['low', 'medium', 'high', 'very high'],
   slaStatus: ['On Track', 'At Risk', 'Breached'],
   language: ['English', 'Spanish', 'French'],
-};
+  corporate: [
+    'Corporate A', 
+    'Corporate B', 
+    'Corporate C'
+  ],
+  audience: [
+    "Consumer-General",
+    "Health Care Provider",
+    "Media/Press",
+    "Academia",
+    "Advocacy",
+    "Business Partner/Provider",
+    "Careers-Graduate",
+    "Careers-Intern",
+    "Careers-IT"
+  ],
+  productLilly: [
+    "Mounjaro",
+    "Trulicity",
+    "Taltz",
+    "Verzenio",
+    "Jardiance",
+    "Tempo",
+    "Trials",
+    "Zepbound",
+    "Zepbound Vial"
+  ],
+  compliance: [
+    "AE",
+    "AE and PC",
+    "Compounding",
+    "Dosage Manipulation",
+    "Fraud/Counterfeit",
+    "None"
+  ],
+  therapeuticArea: [
+    "Cancer-Colorectal",
+    "Cancer-Early Breast Cancer (EBC)",
+    "Cancer-Esophageal",
+    "Cancer-Gastric",
+    "Cancer-Gastrointestinal",
+    "Cancer-General",
+    "Diabetes",
+    "Immunology"
+  ],
+  topicGeneral: [
+    "Product-Experience-P",
+    "Medfinder-P",
+    "Side Effects",
+    "Dosage Questions"
+  ],
+  brand: [
+    "Brand A",
+    "Brand B",
+    "Brand C"
+  ],
+  lillyHealthApp: [
+    "App Feature",
+    "Technical Issue",
+    "General Inquiry"
+  ]
+} as const;

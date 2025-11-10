@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { notFound } from "next/navigation";
 import { getCaseById, agents } from "@/lib/mock-data";
 import type { Agent, Case } from "@/lib/types";
@@ -10,15 +10,33 @@ import { PropertiesView } from "@/components/case-view/properties-view";
 import { CaseViewHeader } from "@/components/case-view/case-view-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function CasePage({ params }: { params: { id: string } }) {
-  const id = params.id;
+export default function CasePage({ params: paramsPromise }: { params: { id: string } }) {
+  const params = use(Promise.resolve(paramsPromise));
+  const { id } = params;
   const [caseData, setCaseData] = useState<Case | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const foundCase = getCaseById(id);
     if (foundCase) {
-      setCaseData(foundCase);
+      // Ensure all property arrays are initialized
+      const initializedCase = {
+        ...foundCase,
+        properties: {
+          ...foundCase.properties,
+          corporate: foundCase.properties.corporate || [],
+          audience: foundCase.properties.audience || [],
+          compliance: foundCase.properties.compliance || [],
+          therapeuticArea: foundCase.properties.therapeuticArea || [],
+          topicGeneral: foundCase.properties.topicGeneral || [],
+          brand: foundCase.properties.brand || [],
+          lillyHealthApp: foundCase.properties.lillyHealthApp || [],
+          lilly_products: Array.isArray(foundCase.properties.lilly_products)
+            ? foundCase.properties.lilly_products
+            : (foundCase.properties.lilly_products ? [foundCase.properties.lilly_products] : [])
+        }
+      };
+      setCaseData(initializedCase);
     } else if (!isLoading) {
       notFound();
     }
