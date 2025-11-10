@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const handleAssignCase = (caseId: string, agent: Agent) => {
     setCases((currentCases) =>
       currentCases.map((c) => {
-        if (c.id === caseId) {
+        if (c.uniqueId?.startsWith(caseId)) { // Match by base ID
           const newStatus: CaseStatus =
             agent.email === 'pace@zamp.ai' ? 'Assigned to Pace' : 'All Assigned';
           
@@ -24,7 +24,11 @@ export default function DashboardPage() {
             description: `Case #${caseId} has been assigned to ${agent.name}.`,
           });
 
-          return { ...c, assignee: agent, status: newStatus };
+          // This logic might need refinement if a case can be in multiple non-assign-related columns
+          // and you want to move it from all of them.
+          if (c.status !== 'All closed') {
+             return { ...c, assignee: agent, status: newStatus };
+          }
         }
         return c;
       })
@@ -32,8 +36,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <ScrollArea className="w-full h-[calc(100vh-4rem)] whitespace-nowrap bg-background">
-      <div className="flex w-max space-x-4 p-4 h-full">
+    <ScrollArea className="w-full whitespace-nowrap bg-background">
+      <div className="flex w-max space-x-4 p-4 h-[calc(100vh-4rem)]">
         {caseStatuses.map((status) => (
           <CaseColumn
             key={status}
