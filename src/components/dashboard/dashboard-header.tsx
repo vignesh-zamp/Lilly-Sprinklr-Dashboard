@@ -1,10 +1,30 @@
-import { Bell, Search, Settings, UserCircle2, AppWindow } from 'lucide-react';
+
+"use client";
+
+import { Bell, Search, Settings, UserCircle2, AppWindow, LogOut, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 
 export function DashboardHeader() {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    router.push('/login');
+  };
+
   return (
     <header className="dark-header flex items-center h-12 px-4 md:px-6 border-b bg-card text-card-foreground shadow-sm">
       <div className="flex items-center gap-3">
@@ -42,10 +62,36 @@ export function DashboardHeader() {
             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 items-center justify-center text-[9px] text-white">9</span>
           </div>
         </div>
-        <Avatar className="h-7 w-7">
-            <AvatarImage src="https://picsum.photos/seed/sherina/40/40" alt="Sherina" />
-            <AvatarFallback className="bg-blue-600 text-white text-xs">SE</AvatarFallback>
-        </Avatar>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-7 w-7">
+                  <AvatarImage src="https://picsum.photos/seed/sherina/40/40" alt="Sherina" />
+                  <AvatarFallback className="bg-blue-600 text-white text-xs">SE</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">Sherina Espinoza</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  sherina.espinoza@lilly.com
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
