@@ -100,7 +100,7 @@ export function CaseCard({ caseItem, agents, onAssignCase }: CaseCardProps) {
                 </CardContent>
             </Link>
         </div>
-        <CardFooter className="p-3 pt-0 flex items-center justify-between text-muted-foreground mt-auto">
+        <CardFooter className="p-3 pt-0 flex items-center justify-between text-muted-foreground">
           <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-7 w-7"><Edit className="h-4 w-4" /></Button>
               <AssignAgentDialog agents={agents} onAssign={(agent) => onAssignCase(caseItem.id, agent)}>
@@ -113,6 +113,4 @@ export function CaseCard({ caseItem, agents, onAssignCase }: CaseCardProps) {
     </Card>
   );
 }
-    
-
     
