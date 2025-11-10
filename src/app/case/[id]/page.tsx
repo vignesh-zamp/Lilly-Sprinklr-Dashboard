@@ -75,13 +75,16 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   const handleStatusChange = (newStatus: CaseStatus) => {
       setCaseData(prev => {
           if (!prev) return null;
+          // If the status is 'All closed', store the case ID in sessionStorage
+          if (newStatus === 'All closed') {
+              sessionStorage.setItem('closedCaseId', prev.id);
+          }
           return { ...prev, status: newStatus };
       });
       toast({
           title: 'Case Status Changed',
           description: `Case #${id} has been moved to "${newStatus}".`
       });
-      // Optionally, navigate away or update a global state
       router.push('/dashboard');
   };
 

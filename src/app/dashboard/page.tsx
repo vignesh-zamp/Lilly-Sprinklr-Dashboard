@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CaseColumn } from '@/components/dashboard/case-column';
 import { initialCases, agents } from '@/lib/mock-data';
 import type { Case, CaseStatus, Agent } from '@/lib/types';
@@ -11,6 +12,40 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 export default function DashboardPage() {
   const [cases, setCases] = useState<Case[]>(initialCases);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const closedCaseId = sessionStorage.getItem('closedCaseId');
+    if (closedCaseId) {
+      setCases(currentCases => {
+        // Find the case that was closed
+        const closedCase = currentCases.find(c => c.id === closedCaseId);
+        if (!closedCase) {
+          sessionStorage.removeItem('closedCaseId');
+          return currentCases;
+        }
+
+        // Remove all instances of this case from the list
+        const filteredCases = currentCases.filter(c => c.id !== closedCaseId);
+
+        // Check if the case is already in the 'All closed' column to avoid duplicates
+        const alreadyInClosed = currentCases.some(c => c.id === closedCaseId && c.status === 'All closed');
+
+        if (!alreadyInClosed) {
+          // Add a new entry for the case in the 'All closed' column
+          filteredCases.push({
+            ...closedCase,
+            status: 'All closed',
+            uniqueId: `${closedCaseId}-All closed-${Date.now()}` // Ensure unique ID
+          });
+        }
+        
+        return filteredCases;
+      });
+      
+      // Clean up the session storage
+      sessionStorage.removeItem('closedCaseId');
+    }
+  }, []);
 
   const handleAssignCase = (caseId: string, agent: Agent) => {
     setCases((currentCases) => {
