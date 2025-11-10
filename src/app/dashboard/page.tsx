@@ -8,7 +8,7 @@ import type { Case, CaseStatus, Agent } from '@/lib/types';
 import { caseStatuses } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { useCollection, useFirestore, useUser } from '@/firebase';
+import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 
@@ -17,7 +17,9 @@ export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const casesCollectionRef = user && firestore ? collection(firestore, 'cases') : null;
+  const casesCollectionRef = useMemoFirebase(() =>
+    user && firestore ? collection(firestore, 'cases') : null
+  , [user, firestore]);
   const { data: cases, isLoading } = useCollection<Case>(casesCollectionRef);
 
   const handleSeedDatabase = async () => {
