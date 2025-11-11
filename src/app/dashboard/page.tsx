@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { CaseColumn } from '@/components/dashboard/case-column';
-import { agents } from '@/lib/mock-data';
+import { agents, getCasesForSeeding } from '@/lib/mock-data';
 import type { Case, CaseStatus, Agent } from '@/lib/types';
 import { caseStatuses } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +12,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebas
 import { collection, doc, updateDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
   const { toast } = useToast();
@@ -22,6 +23,44 @@ export default function DashboardPage() {
     user && firestore ? collection(firestore, 'cases') : null
   , [user, firestore]);
   const { data: cases, isLoading } = useCollection<Case>(casesCollectionRef);
+
+  const handleSeedDatabase = async () => {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Firestore is not available.' });
+      return;
+    }
+    
+    toast({ title: 'Seeding Database...', description: 'Please wait.' });
+
+    const casesToSeed = getCasesForSeeding();
+    const batch = writeBatch(firestore);
+
+    casesToSeed.forEach(caseData => {
+      const docRef = doc(firestore, 'cases', caseData.id);
+      const casePayload: Omit<Case, 'id'> = { ...caseData };
+      delete (casePayload as any).id;
+      batch.set(docRef, casePayload);
+    });
+
+    try {
+      await batch.commit();
+      toast({ title: 'Database Seeded', description: `${casesToSeed.length} cases have been added to Firestore.` });
+    } catch (error: any) {
+      console.error("Error seeding database: ", error);
+      const permissionError = new FirestorePermissionError({
+        path: 'cases collection (batch write)',
+        operation: 'write',
+        requestResourceData: { info: `Batch operation to seed ${casesToSeed.length} cases.` }
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      toast({
+        variant: 'destructive',
+        title: 'Seeding Failed',
+        description: 'Could not write cases to the database. Check console for details.',
+      });
+    }
+  };
+
 
   const handleAssignCase = async (caseId: string, agent: Agent) => {
     if (!firestore || !user) return;
@@ -149,7 +188,14 @@ export default function DashboardPage() {
 
   return (
     <>
-    {cases && (
+    {cases && cases.length === 0 && (
+      <div className="flex flex-col items-center justify-center h-full text-center">
+          <p className="text-lg font-semibold mb-2">Welcome to your dashboard!</p>
+          <p className="text-muted-foreground mb-4">It looks like there's no data yet. You can seed the database with mock cases.</p>
+          <Button onClick={handleSeedDatabase}>Seed Database</Button>
+      </div>
+    )}
+    {cases && cases.length > 0 && (
       <ScrollArea className="w-full whitespace-nowrap bg-background">
         <div className="flex w-max h-[calc(100vh-4rem)]">
           {(caseStatuses || []).map((status, index) => (

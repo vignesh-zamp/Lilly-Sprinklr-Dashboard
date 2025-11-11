@@ -69,105 +69,86 @@ const getComplianceTag = (reportType: string): string[] => {
 };
 
 
-const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
-    const { name, handle } = parseReporter(rawCase.reporter_information);
-    const assignedAgent = getAgent(rawCase.lilly_agent_assigned);
-    const extraProps = casePropertiesMap[rawCase.case_id] || {};
+export const getCasesForSeeding = (): Case[] => {
+    const allCases: Case[] = (rawData.cases as RawCase[]).map((rawCase) => {
+        const { name, handle } = parseReporter(rawCase.reporter_information);
+        const assignedAgent = getAgent(rawCase.lilly_agent_assigned);
+        const extraProps = casePropertiesMap[rawCase.case_id] || {};
 
-    let channel = rawCase.channel;
-    if (rawCase.channel === 'Unknown') {
-        channel = 'Twitter';
-    } else if (rawCase.channel === 'Facebook') {
-        channel = 'Meta';
-    }
+        let channel = rawCase.channel;
+        if (rawCase.channel === 'Unknown') {
+            channel = 'Twitter';
+        } else if (rawCase.channel === 'Facebook') {
+            channel = 'Meta';
+        }
 
-    const initialAudience = rawCase.respondent_type ? (rawCase.respondent_type === "HCP" ? ["Health Care Provider"] : [rawCase.respondent_type]) : [];
+        const initialAudience = rawCase.respondent_type ? (rawCase.respondent_type === "HCP" ? ["Health Care Provider"] : [rawCase.respondent_type]) : [];
+
+        let status: Case['status'] = 'All Assigned';
+        if (extraProps.customStatus === 'closed') {
+            status = 'All closed';
+        } else if (assignedAgent?.email === 'pace@zamp.ai') {
+            status = 'Assigned to Pace';
+        }
+
+        return {
+            id: rawCase.case_id,
+            title: rawCase.ae_pc_details.substring(0, 50) + '...',
+            preview: rawCase.ae_pc_details,
+            status: status,
+            assignee: assignedAgent,
+            createdAt: formatDistanceToNow(new Date(rawCase.receipt_date), { addSuffix: true }),
+            source: channel,
+            user: {
+                name: name,
+                handle: handle,
+                avatarUrl: `https://picsum.photos/seed/user${rawCase.case_id}/40/40`,
+            },
+            conversation: [
+                { id: 'msg1', author: name, avatarUrl: `https://picsum.photos/seed/user${rawCase.case_id}/40/40`, text: rawCase.ae_pc_details, timestamp: formatDistanceToNow(new Date(rawCase.receipt_date), { addSuffix: true }) },
+            ],
+            properties: {
+                status: 'Open',
+                priority: 'medium',
+                slaStatus: 'On Track',
+                report_type: rawCase.report_type,
+                lilly_products: rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : [],
+                audience: initialAudience,
+                compliance: getComplianceTag(rawCase.report_type),
+                language: 'English',
+                tags: [],
+                country: 'Unknown',
+                associated_messages: 1,
+                customStatus: 'assigned',
+                channel: channel,
+                region: 'FRANCE',
+                issueType: 'Click to Add',
+                themeMatches: 'Click to Add',
+                topicMatches: 'Click to Add',
+                topicGroupMatches: 'Click to Add',
+                sourcedFromListening: 'No',
+                sourcedFromCTM: 'No',
+                ctmAdId: 'Click to Add',
+                initialMessagePrivacy: 'Click to Add',
+                hcpType: rawCase.hcp_type,
+                patientGender: rawCase.patient_gender,
+                patientAge: rawCase.patient_age,
+                contactedPoster: rawCase.contacted_poster,
+                posterConsent: rawCase.poster_consent,
+                posterContactInfo: rawCase.poster_contact_info,
+                lotControlNumber: `#${rawCase.lot_control_number} (Unknown)`,
+                ...extraProps,
+                audience: Array.from(new Set([...initialAudience, ...extraProps.audience || []])),
+                lilly_products: Array.from(new Set([...(rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : []), ...Array.isArray(extraProps.lilly_products) ? extraProps.lilly_products : (extraProps.lilly_products ? [extraProps.lilly_products] : [])])),
+                topicGeneral: extraProps.topicGeneral || [],
+            },
+        };
+    });
+    return allCases;
+}
     
-    return {
-        id: rawCase.case_id,
-        title: rawCase.ae_pc_details.substring(0, 50) + '...',
-        preview: rawCase.ae_pc_details,
-        status: 'All Assigned', // Default status
-        assignee: assignedAgent,
-        createdAt: formatDistanceToNow(new Date(rawCase.receipt_date), { addSuffix: true }),
-        source: channel,
-        user: {
-            name: name,
-            handle: handle,
-            avatarUrl: `https://picsum.photos/seed/user${rawCase.case_id}/40/40`,
-        },
-        conversation: [
-            { id: 'msg1', author: name, avatarUrl: `https://picsum.photos/seed/user${rawCase.case_id}/40/40`, text: rawCase.ae_pc_details, timestamp: formatDistanceToNow(new Date(rawCase.receipt_date), { addSuffix: true }) },
-        ],
-        properties: {
-            status: 'Open',
-            priority: 'medium',
-            slaStatus: 'On Track',
-            report_type: rawCase.report_type,
-            lilly_products: rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : [],
-            audience: initialAudience,
-            compliance: getComplianceTag(rawCase.report_type),
-            language: 'English',
-            tags: [], // Deprecated, but kept for type safety
-            country: 'Unknown',
-            associated_messages: 1,
-            customStatus: 'assigned',
-            channel: channel,
-            region: 'FRANCE',
-            issueType: 'Click to Add',
-            themeMatches: 'Click to Add',
-            topicMatches: 'Click to Add',
-            topicGroupMatches: 'Click to Add',
-            sourcedFromListening: 'No',
-            sourcedFromCTM: 'No',
-            ctmAdId: 'Click to Add',
-            initialMessagePrivacy: 'Click to Add',
-            hcpType: rawCase.hcp_type,
-            patientGender: rawCase.patient_gender,
-            patientAge: rawCase.patient_age,
-            contactedPoster: rawCase.contacted_poster,
-            posterConsent: rawCase.poster_consent,
-            posterContactInfo: rawCase.poster_contact_info,
-            lotControlNumber: `#${rawCase.lot_control_number} (Unknown)`,
-            ...extraProps,
-            // Make sure arrays are merged correctly, not overwritten
-            audience: Array.from(new Set([...initialAudience, ...extraProps.audience || []])),
-            lilly_products: Array.from(new Set([...(rawCase.lilly_products !== 'Unknown' ? [rawCase.lilly_products] : []), ...Array.isArray(extraProps.lilly_products) ? extraProps.lilly_products : (extraProps.lilly_products ? [extraProps.lilly_products] : [])])),
-            topicGeneral: extraProps.topicGeneral || [],
-        },
-    };
-});
-
-const getCase = (id: string) => allCases.find(c => c.id === id);
-
-const column2_ids = ['49', '56', '57', '127001', '127002', '127004', '127005', '127006', '127008', '127009', '127011', '127013', '127014', '127015'];
-const column3_ids = ['49', '127001', '127002', '127003', '127004', '127005', '127006', '127008', '127009', '127010', '127011', '127013', '127014', '127015'];
-const column4_ids = ['49', '56', '57', '127001', '127002', '127003', '127004', '127005', '127006', '127008', '127009', '127010', '127011', '127013', '127014', '127015'];
-const column6_ids = ['127007', '127012', '127016', '127017'];
-
-
-const finalCasesMap = new Map<string, Case>();
-
-allCases.forEach(c => {
-    let status: Case['status'] = 'All Assigned'; // Default
-    if (column6_ids.includes(c.id)) {
-        status = 'All closed';
-    } else if (column2_ids.includes(c.id)) {
-        status = 'All Demo - Awaiting';
-    } else if (column3_ids.includes(c.id)) {
-        status = 'Demo - Mentions';
-    } else if (column4_ids.includes(c.id)) {
-        status = 'All Assigned';
-    }
-    
-    // Add to map, which will overwrite with the last assigned status if duplicated across column lists
-    finalCasesMap.set(c.id, { ...c, status });
-});
-
-export const initialCases: Case[] = Array.from(finalCasesMap.values());
-
-
 export const getCaseById = (id: string): Case | undefined => {
-  return allCases.find(c => c.id === id);
+    // This is now a simplified lookup, not ideal for production but fine for this context
+    const allCases = getCasesForSeeding();
+    return allCases.find(c => c.id === id);
 };
-    
