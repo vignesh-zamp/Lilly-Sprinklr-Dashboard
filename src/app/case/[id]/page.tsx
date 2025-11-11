@@ -32,11 +32,11 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   const { data: caseData, isLoading, error } = useDoc<Case>(caseRef);
 
   useEffect(() => {
+    // Let the loading complete before deciding on a 404
     if (!isLoading && !caseData && !error) {
-      // We check for error as well to avoid 404 on permission issues
       notFound();
     }
-  }, [isLoading, caseData, error, id]);
+  }, [isLoading, caseData, error, router]);
 
 
   const handlePropertyChange = async (
@@ -106,9 +106,11 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
 
     if (newStatus === 'All closed') {
         const batch = writeBatch(firestore);
+        
+        const originalCaseRef = doc(firestore, 'cases', originalCaseId);
 
         // 1. Update original case
-        batch.update(caseRef, { status: newStatus });
+        batch.update(originalCaseRef, { status: newStatus });
 
         // 2. Delete replicated demo cases
         const awaitingDemoRef = doc(firestore, 'cases', `${originalCaseId}-demo-awaiting`);
@@ -129,7 +131,7 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
                   path: `cases collection (batch operation on case ${originalCaseId})`,
                   operation: 'write',
                   requestResourceData: { 
-                    update: { path: caseRef.path, data: { status: newStatus } },
+                    update: { path: originalCaseRef.path, data: { status: newStatus } },
                     delete_awaiting: { path: awaitingDemoRef.path },
                     delete_mentions: { path: mentionsDemoRef.path },
                   }
@@ -182,17 +184,17 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
   const initializedCaseData = {
     ...caseData,
     properties: {
+      corporate: [],
+      audience: [],
+      compliance: [],
+      therapeuticArea: [],
+      topicGeneral: [],
+      brand: [],
+      lillyHealthApp: [],
       ...caseData.properties,
-      corporate: caseData.properties.corporate || [],
-      audience: caseData.properties.audience || [],
-      compliance: caseData.properties.compliance || [],
-      therapeuticArea: caseData.properties.therapeuticArea || [],
-      topicGeneral: caseData.properties.topicGeneral || [],
-      brand: caseData.properties.brand || [],
-      lillyHealthApp: caseData.properties.lillyHealthApp || [],
-      lilly_products: Array.isArray(caseData.properties.lilly_products)
+      lilly_products: Array.isArray(caseData.properties?.lilly_products)
         ? caseData.properties.lilly_products
-        : (caseData.properties.lilly_products ? [caseData.properties.lilly_products] : [])
+        : (caseData.properties?.lilly_products ? [caseData.properties.lilly_products] : [])
     }
   };
 
@@ -203,9 +205,10 @@ export default function CasePage({ params: paramsPromise }: { params: Promise<{ 
       <div className="grid md:grid-cols-[2fr_1fr] flex-1 overflow-hidden">
         <ConversationView 
           caseData={initializedCaseData}
-          conversation={initializedCaseData.conversation}
+          conversation={initializedCaseData.conversation || []}
           agents={agents}
           onPropertyChange={handlePropertyChange}
+          onPropertyRemove={handlePropertyRemove}
           onStatusChange={handleStatusChange}
         />
         <PropertiesView

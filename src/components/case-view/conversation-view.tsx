@@ -1,5 +1,5 @@
 
-import type { Message, Case, Agent, CaseStatus } from '@/lib/types';
+import type { Message, Case, Agent, CaseStatus, CaseProperties } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,12 +14,13 @@ type ConversationViewProps = {
   conversation: Message[];
   caseData: Case;
   agents: Agent[];
-  onPropertyChange: (property: 'assignee', value: any) => void;
+  onPropertyChange: (property: 'assignee' | keyof CaseProperties, value: any) => void;
+  onPropertyRemove: (property: keyof CaseProperties, value: any) => void;
   onStatusChange: (status: CaseStatus) => void;
 };
 
 
-export function ConversationView({ conversation, caseData, agents, onPropertyChange, onStatusChange }: ConversationViewProps) {
+export function ConversationView({ conversation, caseData, agents, onPropertyChange, onPropertyRemove, onStatusChange }: ConversationViewProps) {
   return (
     <div className="flex flex-col h-full bg-muted/30">
         <ScrollArea className="flex-1">
@@ -89,6 +90,7 @@ export function ConversationView({ conversation, caseData, agents, onPropertyCha
                     caseData={caseData}
                     agents={agents}
                     onPropertyChange={onPropertyChange}
+                    onPropertyRemove={onPropertyRemove}
                     onStatusChange={onStatusChange}
                  />
                  <Button>Send</Button>
