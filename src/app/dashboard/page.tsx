@@ -185,12 +185,18 @@ export default function DashboardPage() {
         </div>
     )
   }
+  
+  if (!cases || cases.length === 0) {
+    return (
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+            <p className="text-muted-foreground">No cases found in the database.</p>
+            <Button onClick={handleSeedDatabase}>Seed Database with Mock Data</Button>
+        </div>
+    )
+  }
 
   return (
     <>
-      <div className="absolute top-16 right-4 z-10">
-        <Button onClick={handleSeedDatabase}>Seed Database</Button>
-      </div>
       <ScrollArea className="w-full whitespace-nowrap bg-background">
         <div className="flex w-max h-[calc(100vh-4rem)]">
           {(caseStatuses || []).map((status, index) => (
