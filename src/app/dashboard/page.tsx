@@ -188,14 +188,9 @@ export default function DashboardPage() {
 
   return (
     <>
-    {cases && cases.length === 0 && (
-      <div className="flex flex-col items-center justify-center h-full text-center">
-          <p className="text-lg font-semibold mb-2">Welcome to your dashboard!</p>
-          <p className="text-muted-foreground mb-4">It looks like there's no data yet. You can seed the database with mock cases.</p>
-          <Button onClick={handleSeedDatabase}>Seed Database</Button>
+      <div className="absolute top-16 right-4 z-10">
+        <Button onClick={handleSeedDatabase}>Seed Database</Button>
       </div>
-    )}
-    {cases && cases.length > 0 && (
       <ScrollArea className="w-full whitespace-nowrap bg-background">
         <div className="flex w-max h-[calc(100vh-4rem)]">
           {(caseStatuses || []).map((status, index) => (
@@ -213,7 +208,6 @@ export default function DashboardPage() {
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-    )}
     </>
   );
 }
