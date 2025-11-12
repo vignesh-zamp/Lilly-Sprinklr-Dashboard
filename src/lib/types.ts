@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 
 export type Agent = {
@@ -129,19 +130,19 @@ export const propertyOptions = {
   ],
   productLilly: [
     "Mounjaro",
-    "Trulicity",
-    "Taltz",
-    "Verzenio",
-    "Jardiance",
-    "Tempo",
-    "Trials",
-    "Zepbound",
-    "Zepbound Vial",
-    "Basaglar",
-    "Cyramza",
-    "Humalog",
-    "Alimta",
-    "Retevmo"
+    "Bluestream",
+    "Riverstone",
+    "Meadowlark",
+    "Pinecrest",
+    "Cloudrift",
+    "Foxglove",
+    "Thunderpeak",
+    "Thunderpeak Vial",
+    "Silvertide",
+    "Maplewing",
+    "Windcrest",
+    "Sunridge",
+    "Oakhaven"
   ],
   compliance: [
     "AE",
