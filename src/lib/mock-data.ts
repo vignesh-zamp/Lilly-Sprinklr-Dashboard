@@ -48,17 +48,17 @@ const casePropertiesMap: { [key: string]: Partial<Case['properties']> } = {
     '127004': { priority: 'very high', country: 'CA', associated_messages: 1, customStatus: 'assigned', region: 'CA' },
     '127005': { priority: 'medium', country: 'FR', associated_messages: 3, customStatus: 'assigned', region: 'FR' },
     '127006': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
-    '127007': { priority: 'medium', country: 'CA', associated_messages: 4, customStatus: 'closed', region: 'CA', lilly_products: ["Alimta"] },
+    '127007': { priority: 'medium', country: 'CA', associated_messages: 4, customStatus: 'closed', region: 'CA', lilly_products: ["Sunridge"] },
     '127008': { priority: 'high', country: 'US', associated_messages: 2, customStatus: 'assigned', region: 'US' },
     '127009': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US', audience: ["Careers-Graduate"] },
     '127010': { priority: 'high', country: 'US', associated_messages: 5, customStatus: 'in progress', region: 'US', audience: ["Business Partner/Provider"] },
-    '127011': { priority: 'very high', country: 'UK', associated_messages: 2, customStatus: 'assigned', region: 'UK', lilly_products: ["Cyramza"] },
+    '127011': { priority: 'very high', country: 'UK', associated_messages: 2, customStatus: 'assigned', region: 'UK', lilly_products: ["Maplewing"] },
     '127012': { priority: 'low', country: 'CA', associated_messages: 1, customStatus: 'closed', region: 'CA', topicGeneral: ["Testimonial"] },
-    '127013': { priority: 'very high', country: 'US', associated_messages: 3, customStatus: 'assigned', region: 'US', lilly_products: ["Humalog"], compliance: ["PC", "Broken Seal"] },
+    '127013': { priority: 'very high', country: 'US', associated_messages: 3, customStatus: 'assigned', region: 'US', lilly_products: ["Windcrest"], compliance: ["PC", "Broken Seal"] },
     '127014': { priority: 'low', country: 'US', associated_messages: 1, customStatus: 'assigned', region: 'US' },
     '127015': { priority: 'medium', country: 'US', associated_messages: 2, customStatus: 'assigned', region: 'US' },
     '127016': { priority: 'medium', country: 'US', associated_messages: 6, customStatus: 'closed', region: 'US', topicGeneral: ["Pricing"] },
-    '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed', region: 'CA', lilly_products: ["Retevmo"] },
+    '127017': { priority: 'high', country: 'CA', associated_messages: 2, customStatus: 'closed', region: 'CA', lilly_products: ["Oakhaven"] },
 };
 
 const getComplianceTag = (reportType: string): string[] => {
@@ -96,7 +96,7 @@ export const getCasesForSeeding = (): Case[] => {
             title: rawCase.ae_pc_details.substring(0, 50) + '...',
             preview: rawCase.ae_pc_details,
             status: status,
-            assignee: assignedAgent,
+            assignee: assignedAgent || null,
             createdAt: formatDistanceToNow(new Date(rawCase.receipt_date), { addSuffix: true }),
             source: channel,
             user: {
