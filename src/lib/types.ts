@@ -129,7 +129,7 @@ export const propertyOptions = {
     "Careers-IT"
   ],
   productLilly: [
-    "Mounjaro",
+    "Firestorm",
     "Bluestream",
     "Riverstone",
     "Meadowlark",
